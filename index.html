@@ -17,63 +17,99 @@ if(Math.random()<.15&&f.y>=floor-f.h)f.vy=-14;
 if(f.invul===0)f.vx=move*4.4;f.x+=f.vx;f.vy+=gravity;f.y+=f.vy;if(f.y>floor-f.h){f.y=floor-f.h;f.vy=0;}f.x=Math.max(20,Math.min(886,f.x));if(f.attack===7||f.attack===12){let reach=f.attackKind==='kick'?112:88;if(Math.abs((other.x+27)-(f.x+27))<reach&&Math.abs(other.y-f.y)<85&&other.invul===0){other.hp=Math.max(0,other.hp-(f.attackKind==='kick'?11:7));other.vx=f.face*8;other.flash=8;}}
 if(f.blue>0&&other.invul===0){let target=f.x+f.face*105;let dist=target-other.x;if(Math.abs(dist)<390){other.x+=Math.sign(dist)*Math.min(5,Math.abs(dist));other.vy-=.22;}}}
 function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h)}
+
+function poly(points,color){ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.closePath();ctx.fill();}
+function bone(a,b,width,color,outline='#141524'){
+ ctx.lineCap='round';ctx.lineJoin='round';
+ ctx.strokeStyle=outline;ctx.lineWidth=width+4;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+ ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.stroke();
+}
 function drawF(f){
- const x=Math.round(f.x), y=Math.round(f.y), gojo=f.name==='Gojo', moving=Math.abs(f.vx||0)>1;
- const ink='#121322', skin=gojo?'#e6c5ad':'#c99a80', coat=gojo?'#161c36':'#242633', pants=gojo?'#d7d4e7':'#8b879b';
- const bob=moving?Math.sin(frame*.35)*2:Math.sin(frame*.07)*1.2;
+ const x=Math.round(f.x), y=Math.round(f.y),gojo=f.name==='Gojo';
+ const ink='#111320',skin=gojo?'#e8c7b0':'#d8a386',shadow=gojo?'#ac7b78':'#a46b57';
+ const top=gojo?'#191f3a':'#262a31',light=gojo?'#414c77':'#485260';
+ const pants=gojo?'#e1dfed':'#817f94',fold=gojo?'#aaa6c5':'#575568',boot='#1a1c2c';
+ const moving=Math.abs(f.vx||0)>1, grounded=f.y>=floor-f.h-1;
+ const bob=moving&&grounded?Math.sin(frame*.28)*2:Math.sin(frame*.06);
+ const attacking=f.attack>0;
+ const punch=attacking&&f.attackKind==='punch',kick=attacking&&f.attackKind==='kick';
+ // Every attack contains distinct preparation, extension, impact, and recovery poses.
+ const total=punch?12:18, elapsed=total-f.attack;
+ const extension=punch?(elapsed<3?-.22:elapsed<5?.28:elapsed<9?1:elapsed<11?.52:0)
+                        :(elapsed<4?0:elapsed<7?.35:elapsed<13?1:elapsed<16?.6:0);
+ const step=moving?Math.sin(frame*.27)*7:0;
  ctx.save();ctx.translate(x+27,0);ctx.scale(f.face,1);ctx.translate(-27,0);
- if(f.invul&&frame%4<2)ctx.globalAlpha=.55;
- const yy=y+bob;
- // grounded shadow, legs, cloth folds and boots
- rect(5,yy+104,51,4,'#19172c');
- rect(9,yy+61,19,41,pants);rect(29,yy+61,19,41,pants);
- rect(10,yy+67,5,25,gojo?'#f6f4ff':'#a4a0b4');rect(25,yy+72,3,22,'#88849e');
- rect(31,yy+68,5,27,gojo?'#f1edff':'#aaa6b7');rect(44,yy+77,4,19,'#5b586f');
- rect(7,yy+98,24,9,ink);rect(29,yy+98,24,9,ink);rect(9,yy+100,19,3,'#42435b');rect(31,yy+100,19,3,'#42435b');
- // jacket, collar, highlights, belt
- rect(7,yy+31,43,37,ink);rect(10,yy+33,37,33,coat);
- rect(13,yy+36,6,26,gojo?'#343a60':'#3b3c50');rect(42,yy+37,5,23,'#0e1020');
- rect(20,yy+34,15,11,'#101325');rect(23,yy+43,5,19,'#3c3e55');
- rect(10,yy+62,37,5,gojo?'#3d3e59':'#55445c');
- // arms: extend attacking limb; animated forearm for punch and kick
- rect(1,yy+35,12,29,coat);rect(2,yy+53,11,12,skin);
- rect(44,yy+35,12,28,coat);rect(45,yy+54,11,11,skin);
- if(f.attack>0){
-   const reach=f.attackKind==='kick'?74:51;
-   rect(45,yy+39,reach,11,f.attackKind==='kick'?pants:coat);
-   rect(45+reach-13,yy+39,14,11,f.attackKind==='kick'?ink:skin);
-   if(f.attackKind==='kick'){rect(30,yy+74,74,14,pants);rect(88,yy+75,21,12,ink)}
- }
- // neck, face, ear, shading
- rect(19,yy+27,17,9,skin);rect(12,yy+8,34,26,ink);
- rect(15,yy+10,28,23,skin);rect(38,yy+16,5,12,'#a87568');
- rect(19,yy+28,20,3,'#a77670');
+ if(f.invul&&frame%4<2)ctx.globalAlpha=.6;
+ ctx.translate(0,y+bob);
+ // Feet planted on one ground line, with overlapping limbs in separate layers.
+ ctx.fillStyle='#11112270';ctx.beginPath();ctx.ellipse(28,106,38,5,0,0,Math.PI*2);ctx.fill();
+ const backHip=[19,68],frontHip=[39,67];
+ const backKnee=[16-step*.45,84],backFoot=[12-step,99];
+ let frontKnee=[39+step*.5,84],frontFoot=[44+step,99];
+ if(!grounded){frontKnee=[45,81];frontFoot=[56,92];}
+ if(kick){frontKnee=[40+extension*24,83-extension*13];frontFoot=[44+extension*75,100-extension*35];}
+ bone(backHip,backKnee,18,fold,ink);bone(backKnee,backFoot,15,pants,ink);
+ bone(backFoot,[backFoot[0]+13,backFoot[1]+2],9,boot,ink);
+ // Far shoulder, bent far arm guarding the face.
+ bone([10,35],[3,52],15,top,ink);
+ bone([3,52],[17,56],11,skin,ink);
+ poly([[12,32],[42,30],[51,40],[49,65],[42,72],[14,72],[5,58],[5,43]],ink);
+ poly([[13,35],[40,33],[47,41],[45,64],[40,69],[16,69],[9,57],[9,43]],top);
+ poly([[14,37],[20,35],[18,62],[14,60]],light);
+ poly([[32,40],[38,39],[39,62],[34,65]],light);
+ rect(13,65,32,5,gojo?'#595877':'#504455');
+ bone(frontHip,frontKnee,18,pants,ink);bone(frontKnee,frontFoot,15,fold,ink);
+ bone(frontFoot,[frontFoot[0]+15,frontFoot[1]+2],9,boot,ink);
+ bone([42,73],[43,86],3,pants,fold);
+ // Neck and head with face profile and darker edge shading.
+ rect(21,25,14,13,skin);
+ poly([[16,8],[36,7],[43,14],[43,27],[37,33],[20,32],[13,24],[13,15]],ink);
+ poly([[17,10],[35,10],[40,15],[40,26],[35,30],[21,29],[16,23]],skin);
+ poly([[36,18],[41,18],[40,27],[35,29]],shadow);
+ rect(35,24,5,2,shadow);
  if(gojo){
-   // spiky silver hair, dark blindfold, pale fringe
-   const spikes=[[10,7,7,13],[16,-3,8,19],[23,-8,8,20],[31,-5,8,19],[39,0,9,17],[45,8,6,12]];
-   spikes.forEach(([a,b,w,h],i)=>{rect(a,yy+b,w,h,i%2?'#cdd7f9':'#f6f7ff')});
-   rect(13,yy+14,31,9,'#10162c');rect(17,yy+16,23,3,'#343a60');
-   rect(38,yy+23,4,2,'#a96f6d');
+   poly([[12,17],[5,12],[10,5],[6,-2],[17,3],[20,-6],[26,0],[32,-9],[36,0],[45,-3],[42,8],[48,11],[38,16],[33,10],[26,15],[19,10]],'#f8faff');
+   poly([[8,9],[17,3],[21,10],[28,5],[36,9],[43,7],[39,13],[28,12],[20,15]],'#bdccec');
+   rect(15,16,27,8,ink);rect(17,17,21,2,'#313d66');
  }else{
-   const spikes=[[11,5,8,13],[15,-1,10,18],[24,-4,10,18],[34,1,11,15],[42,8,6,11]];
-   spikes.forEach(([a,b,w,h])=>rect(a,yy+b,w,h,'#10121c'));
-   rect(19,yy+19,7,3,'#141725');rect(34,yy+19,7,3,'#141725');
-   rect(19,yy+17,7,2,'#d6d6d6');rect(35,yy+17,6,2,'#d6d6d6');
-   rect(38,yy+26,6,2,'#744b50');
-   // purple inventory curse coils over shoulder
-   rect(1,yy+29,11,8,'#5f3d7b');rect(-5,yy+23,10,8,'#8c5aa2');
-   rect(-8,yy+16,9,8,'#62437e');rect(-3,yy+11,11,7,'#a26db0');
-   rect(1,yy+25,5,3,'#bd8dd3');
+   poly([[10,17],[6,9],[12,7],[9,-2],[20,3],[23,-7],[29,2],[37,-5],[40,5],[47,8],[40,17],[33,12],[24,14],[17,11]],'#151822');
+   poly([[12,11],[19,5],[24,9],[29,3],[37,8],[39,12],[28,11]],'#414553');
+   rect(27,18,9,2,'#11121b');rect(32,17,5,1,'#e3e2dd');
+   // Toji's purple storage curse wraps visibly around his back.
+   bone([5,36],[-9,31],11,'#6c4187','#332344');
+   bone([-9,31],[-9,17],10,'#9565b4','#332344');
+   rect(-13,13,9,7,'#a776bc');rect(-9,15,3,3,'#f4b7df');
  }
- // swirling blue special and purple dash afterimages
+ // Near shoulder is always attached to the striking arm.
+ const shoulder=[43,38];
+ let elbow=[52,51],fist=[42,47];
+ if(punch){
+   // Windup: elbow is pulled behind the torso; strike drives from the shoulder.
+   elbow=extension<0?[30,46]:[49+extension*22,42-extension*5];
+   fist=extension<0?[24,42]:[45+extension*74,43-extension*9];
+ }else if(kick){elbow=[53,51];fist=[45,37];}
+ else if(f.blue){elbow=[58,39];fist=[75,35];}
+ bone(shoulder,elbow,14,top,ink);
+ bone(elbow,[fist[0]-3,fist[1]],11,punch?top:skin,ink);
+ // Pixel-shaped fist and knuckles, connected to the wrist on every frame.
+ ctx.fillStyle=ink;ctx.fillRect(fist[0]-7,fist[1]-7,17,15);
+ ctx.fillStyle=skin;ctx.fillRect(fist[0]-5,fist[1]-5,14,11);
+ ctx.fillStyle='#ffdcc3';ctx.fillRect(fist[0]+3,fist[1]-4,5,3);
+ ctx.fillStyle=shadow;ctx.fillRect(fist[0]+2,fist[1]+3,6,2);
+ if(punch&&extension>.8){
+   // Impact flash emphasizes the fist, not a long rectangular arm.
+   ctx.strokeStyle='#fbe8ac';ctx.lineWidth=3;
+   for(const [dx,dy] of [[10,-12],[15,0],[9,13]]){ctx.beginPath();ctx.moveTo(fist[0]+dx,fist[1]+dy);ctx.lineTo(fist[0]+dx+6,fist[1]+dy+(dy<0?-4:dy>0?4:0));ctx.stroke();}
+ }
  if(f.blue){
-   const cx=104,cy=yy+43;
+   const cx=104,cy=42;
    for(let i=0;i<4;i++){ctx.strokeStyle=['#183ba6','#2677ef','#39cfff','#b4ffff'][i];ctx.lineWidth=7-i;
      ctx.beginPath();ctx.arc(cx,cy,24+i*5,frame*.13+i,frame*.13+i+4.3);ctx.stroke();}
    rect(cx-10,cy-10,20,20,'#8feaff');rect(cx-5,cy-5,10,10,'#f0ffff');
  }
- if(f.invul){for(let i=0;i<5;i++){rect(-15-i*13,yy+12+i*15,23,4,i%2?'#db8aff':'#8447d6')}}
+ if(f.invul){for(let i=0;i<5;i++)rect(-15-i*13,12+i*15,23,4,i%2?'#db8aff':'#8447d6');}
  ctx.restore();
 }
+
 function draw(){let bg=ctx.createLinearGradient(0,0,0,540);bg.addColorStop(0,'#17112d');bg.addColorStop(1,'#5a3b68');ctx.fillStyle=bg;ctx.fillRect(0,0,960,540);for(let i=0;i<12;i++){rect(i*90,230+(i%3)*22,65,220,'#27223f');rect(i*90+14,260+(i%3)*22,15,50,'#473c5c')}rect(0,floor,960,90,'#3d3449');rect(0,floor,960,7,'#9a7a99');for(let i=0;i<960;i+=48)rect(i,floor+32,30,3,'#51455c');if(fighters.length){fighters.forEach(drawF);fighters.forEach((f,i)=>{let x=i===0?35:545;rect(x,28,380,31,'#0a0a16');rect(x+4,32,372*(f.hp/100),23,i===0?'#55caff':'#d878b7');ctx.font='bold 23px monospace';ctx.fillStyle='white';ctx.textAlign=i===0?'left':'right';ctx.fillText(f.name,i===0?35:925,87);ctx.font='16px monospace';ctx.fillText(f.cool?'SPECIAL: '+Math.ceil(f.cool/60)+'s':'SPECIAL READY',i===0?35:925,111);});}else{ctx.fillStyle='white';ctx.font='bold 40px monospace';ctx.textAlign='center';ctx.fillText('GOJO VS TOJI',480,210);ctx.font='22px monospace';ctx.fillText('Choose your fighters above!',480,260)}particles=particles.filter(p=>p.life-->0);for(let p of particles){p.x+=p.vx;p.y+=p.vy;rect(p.x,p.y,5,5,p.color)}}function loop(){frame++;if(playing){updateF(fighters[0],fighters[1],{left:'arrowleft',right:'arrowright',jump:'arrowup',jumpAlt:' ',punch:'f',kick:'d',special:'a'},false);updateF(fighters[1],fighters[0],{left:'j',right:'l',jump:'i',punch:'n',kick:'m',special:'o'},mode.value==='cpu');if(fighters.some(f=>f.hp<=0)){playing=false;status.textContent=fighters[0].hp<=0&&fighters[1].hp<=0?'Draw!':fighters.find(f=>f.hp>0).name+' wins! Press Start fight to play again.';}}draw();requestAnimationFrame(loop)}loop();
 </script></body></html>
