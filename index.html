@@ -1,0 +1,79 @@
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gojo vs Toji</title><style>body{margin:0;background:#101020;color:white;font:16px system-ui;text-align:center}h1{margin:12px}canvas{width:min(96vw,960px);background:#18152c;border:3px solid #777;image-rendering:pixelated}button,select{font:inherit;padding:9px;margin:5px;border-radius:7px}p{margin:8px}</style></head><body><h1>⚡ Gojo vs Toji ⚡</h1><div id="menu"><label>Mode <select id="mode"><option value="cpu">1 Player vs CPU</option><option value="pvp">2 Players</option></select></label><label>Player 1 <select id="c1"><option>Gojo</option><option>Toji</option></select></label><label>Player 2 <select id="c2"><option>Toji</option><option>Gojo</option></select></label><button id="start">Start fight!</button></div><canvas id="game" width="960" height="540"></canvas><p>Player 1: ←/→ move · ↑ or Space jump · F punch · D kick · A special</p><p>Player 2: J/L move · I jump · N punch · M kick · O special (2-player mode)</p><p id="status">Choose your fighters and start!</p><script>
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;const keys={},floor=450,gravity=.75;let fighters=[],playing=false,frame=0,particles=[];onkeydown=e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys[e.key.toLowerCase()]=true};onkeyup=e=>keys[e.key.toLowerCase()]=false;
+function make(name,x,side){return{name,x,y:floor-105,vx:0,vy:0,w:54,h:105,side,face:side===0?1:-1,hp:100,cool:0,attack:0,attackKind:'',invul:0,blue:0,flash:0,aiDelay:0}}
+function start(){fighters=[make(c1.value,200,0),make(c2.value,700,1)];playing=true;frame=0;particles=[];status.textContent='Fight!';}document.getElementById('start').onclick=start;
+function action(f,type){if(f.cool>0||!playing)return;let other=fighters[1-f.side];if(type==='special'){f.cool=(f.name==='Toji'&&document.getElementById('mode').value==='cpu'&&f.side===1)?300:95;if(f.name==='Gojo'){f.blue=34;for(let i=0;i<24;i++)particles.push({x:f.x+f.w/2+f.face*80,y:f.y+40,vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*8,life:32,color:'#40caff'});}else{f.invul=22;f.vx=f.face*19;f.flash=22;}}else{f.attack=type==='punch'?12:18;f.attackKind=type;f.cool=type==='punch'?23:33;}}
+function updateF(f,other,ctrl,cpu){f.face=other.x>f.x?1:-1;f.cool=Math.max(0,f.cool-1);f.attack=Math.max(0,f.attack-1);f.invul=Math.max(0,f.invul-1);f.blue=Math.max(0,f.blue-1);f.flash=Math.max(0,f.flash-1);let move=0;if(cpu){let dist=other.x-f.x;move=Math.abs(dist)>100?Math.sign(dist):Math.random()<.03?-Math.sign(dist):0;if(f.aiDelay--<=0){
+f.aiDelay=12+Math.random()*20;
+const threatenedByBlue=other.name==='Gojo'&&other.blue>0&&Math.abs(dist)<390;
+const threatenedByStrike=other.attack>0&&other.face===Math.sign(f.x-other.x)&&Math.abs(dist)<(other.attackKind==='kick'?112:88)&&Math.abs(other.y-f.y)<85;
+if(f.name==='Toji'&&(threatenedByBlue||threatenedByStrike)&&f.cool===0){
+action(f,'special');
+}else if(Math.abs(dist)<115){
+action(f,Math.random()<.55?'punch':'kick');
+}
+if(Math.random()<.15&&f.y>=floor-f.h)f.vy=-14;
+}}else{move=(keys[ctrl.right]?1:0)-(keys[ctrl.left]?1:0);if((keys[ctrl.jump]||(ctrl.jumpAlt&&keys[ctrl.jumpAlt]))&&f.y>=floor-f.h)f.vy=-14;if(keys[ctrl.punch])action(f,'punch');if(keys[ctrl.kick])action(f,'kick');if(keys[ctrl.special])action(f,'special');}
+if(f.invul===0)f.vx=move*4.4;f.x+=f.vx;f.vy+=gravity;f.y+=f.vy;if(f.y>floor-f.h){f.y=floor-f.h;f.vy=0;}f.x=Math.max(20,Math.min(886,f.x));if(f.attack===7||f.attack===12){let reach=f.attackKind==='kick'?112:88;if(Math.abs((other.x+27)-(f.x+27))<reach&&Math.abs(other.y-f.y)<85&&other.invul===0){other.hp=Math.max(0,other.hp-(f.attackKind==='kick'?11:7));other.vx=f.face*8;other.flash=8;}}
+if(f.blue>0&&other.invul===0){let target=f.x+f.face*105;let dist=target-other.x;if(Math.abs(dist)<390){other.x+=Math.sign(dist)*Math.min(5,Math.abs(dist));other.vy-=.22;}}}
+function rect(x,y,w,h,c){ctx.fillStyle=c;ctx.fillRect(Math.round(x),Math.round(y),w,h)}
+function drawF(f){
+ const x=Math.round(f.x), y=Math.round(f.y), gojo=f.name==='Gojo', moving=Math.abs(f.vx||0)>1;
+ const ink='#121322', skin=gojo?'#e6c5ad':'#c99a80', coat=gojo?'#161c36':'#242633', pants=gojo?'#d7d4e7':'#8b879b';
+ const bob=moving?Math.sin(frame*.35)*2:Math.sin(frame*.07)*1.2;
+ ctx.save();ctx.translate(x+27,0);ctx.scale(f.face,1);ctx.translate(-27,0);
+ if(f.invul&&frame%4<2)ctx.globalAlpha=.55;
+ const yy=y+bob;
+ // grounded shadow, legs, cloth folds and boots
+ rect(5,yy+104,51,4,'#19172c');
+ rect(9,yy+61,19,41,pants);rect(29,yy+61,19,41,pants);
+ rect(10,yy+67,5,25,gojo?'#f6f4ff':'#a4a0b4');rect(25,yy+72,3,22,'#88849e');
+ rect(31,yy+68,5,27,gojo?'#f1edff':'#aaa6b7');rect(44,yy+77,4,19,'#5b586f');
+ rect(7,yy+98,24,9,ink);rect(29,yy+98,24,9,ink);rect(9,yy+100,19,3,'#42435b');rect(31,yy+100,19,3,'#42435b');
+ // jacket, collar, highlights, belt
+ rect(7,yy+31,43,37,ink);rect(10,yy+33,37,33,coat);
+ rect(13,yy+36,6,26,gojo?'#343a60':'#3b3c50');rect(42,yy+37,5,23,'#0e1020');
+ rect(20,yy+34,15,11,'#101325');rect(23,yy+43,5,19,'#3c3e55');
+ rect(10,yy+62,37,5,gojo?'#3d3e59':'#55445c');
+ // arms: extend attacking limb; animated forearm for punch and kick
+ rect(1,yy+35,12,29,coat);rect(2,yy+53,11,12,skin);
+ rect(44,yy+35,12,28,coat);rect(45,yy+54,11,11,skin);
+ if(f.attack>0){
+   const reach=f.attackKind==='kick'?74:51;
+   rect(45,yy+39,reach,11,f.attackKind==='kick'?pants:coat);
+   rect(45+reach-13,yy+39,14,11,f.attackKind==='kick'?ink:skin);
+   if(f.attackKind==='kick'){rect(30,yy+74,74,14,pants);rect(88,yy+75,21,12,ink)}
+ }
+ // neck, face, ear, shading
+ rect(19,yy+27,17,9,skin);rect(12,yy+8,34,26,ink);
+ rect(15,yy+10,28,23,skin);rect(38,yy+16,5,12,'#a87568');
+ rect(19,yy+28,20,3,'#a77670');
+ if(gojo){
+   // spiky silver hair, dark blindfold, pale fringe
+   const spikes=[[10,7,7,13],[16,-3,8,19],[23,-8,8,20],[31,-5,8,19],[39,0,9,17],[45,8,6,12]];
+   spikes.forEach(([a,b,w,h],i)=>{rect(a,yy+b,w,h,i%2?'#cdd7f9':'#f6f7ff')});
+   rect(13,yy+14,31,9,'#10162c');rect(17,yy+16,23,3,'#343a60');
+   rect(38,yy+23,4,2,'#a96f6d');
+ }else{
+   const spikes=[[11,5,8,13],[15,-1,10,18],[24,-4,10,18],[34,1,11,15],[42,8,6,11]];
+   spikes.forEach(([a,b,w,h])=>rect(a,yy+b,w,h,'#10121c'));
+   rect(19,yy+19,7,3,'#141725');rect(34,yy+19,7,3,'#141725');
+   rect(19,yy+17,7,2,'#d6d6d6');rect(35,yy+17,6,2,'#d6d6d6');
+   rect(38,yy+26,6,2,'#744b50');
+   // purple inventory curse coils over shoulder
+   rect(1,yy+29,11,8,'#5f3d7b');rect(-5,yy+23,10,8,'#8c5aa2');
+   rect(-8,yy+16,9,8,'#62437e');rect(-3,yy+11,11,7,'#a26db0');
+   rect(1,yy+25,5,3,'#bd8dd3');
+ }
+ // swirling blue special and purple dash afterimages
+ if(f.blue){
+   const cx=104,cy=yy+43;
+   for(let i=0;i<4;i++){ctx.strokeStyle=['#183ba6','#2677ef','#39cfff','#b4ffff'][i];ctx.lineWidth=7-i;
+     ctx.beginPath();ctx.arc(cx,cy,24+i*5,frame*.13+i,frame*.13+i+4.3);ctx.stroke();}
+   rect(cx-10,cy-10,20,20,'#8feaff');rect(cx-5,cy-5,10,10,'#f0ffff');
+ }
+ if(f.invul){for(let i=0;i<5;i++){rect(-15-i*13,yy+12+i*15,23,4,i%2?'#db8aff':'#8447d6')}}
+ ctx.restore();
+}
+function draw(){let bg=ctx.createLinearGradient(0,0,0,540);bg.addColorStop(0,'#17112d');bg.addColorStop(1,'#5a3b68');ctx.fillStyle=bg;ctx.fillRect(0,0,960,540);for(let i=0;i<12;i++){rect(i*90,230+(i%3)*22,65,220,'#27223f');rect(i*90+14,260+(i%3)*22,15,50,'#473c5c')}rect(0,floor,960,90,'#3d3449');rect(0,floor,960,7,'#9a7a99');for(let i=0;i<960;i+=48)rect(i,floor+32,30,3,'#51455c');if(fighters.length){fighters.forEach(drawF);fighters.forEach((f,i)=>{let x=i===0?35:545;rect(x,28,380,31,'#0a0a16');rect(x+4,32,372*(f.hp/100),23,i===0?'#55caff':'#d878b7');ctx.font='bold 23px monospace';ctx.fillStyle='white';ctx.textAlign=i===0?'left':'right';ctx.fillText(f.name,i===0?35:925,87);ctx.font='16px monospace';ctx.fillText(f.cool?'SPECIAL: '+Math.ceil(f.cool/60)+'s':'SPECIAL READY',i===0?35:925,111);});}else{ctx.fillStyle='white';ctx.font='bold 40px monospace';ctx.textAlign='center';ctx.fillText('GOJO VS TOJI',480,210);ctx.font='22px monospace';ctx.fillText('Choose your fighters above!',480,260)}particles=particles.filter(p=>p.life-->0);for(let p of particles){p.x+=p.vx;p.y+=p.vy;rect(p.x,p.y,5,5,p.color)}}function loop(){frame++;if(playing){updateF(fighters[0],fighters[1],{left:'arrowleft',right:'arrowright',jump:'arrowup',jumpAlt:' ',punch:'f',kick:'d',special:'a'},false);updateF(fighters[1],fighters[0],{left:'j',right:'l',jump:'i',punch:'n',kick:'m',special:'o'},mode.value==='cpu');if(fighters.some(f=>f.hp<=0)){playing=false;status.textContent=fighters[0].hp<=0&&fighters[1].hp<=0?'Draw!':fighters.find(f=>f.hp>0).name+' wins! Press Start fight to play again.';}}draw();requestAnimationFrame(loop)}loop();
+</script></body></html>
