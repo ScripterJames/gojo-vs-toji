@@ -116,7 +116,7 @@
     return { x: f.x + f.w / 2 + f.face * 105, y: f.y + 43 };
   }
   function blueStrength(f) {
-    return clamp((35 - f.blue) / 7, 0.16, 1) * clamp(f.blue / 8, 0, 1);
+    return clamp((300 - f.blue) / 12, 0.16, 1) * clamp(f.blue / 15, 0, 1);
   }
 
   function blueBack(ctx, f, tick) {

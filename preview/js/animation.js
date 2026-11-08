@@ -50,7 +50,7 @@
     } else if (f.flash > 0 && f.invul === 0) {
       state = 'hurt'; elapsed = 8 - Math.min(8, f.flash);
     } else if (f.blue > 0 && f.name === 'Gojo') {
-      state = 'special'; elapsed = 34 - f.blue;
+      state = 'special'; elapsed = 300 - f.blue;
     } else if (f.y < floor - f.h - 1) state = f.vy < 0 ? 'jump' : 'fall';
     else if (Math.abs(f.vx) > 0.9) state = 'walk';
     else state = 'idle';
