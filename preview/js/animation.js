@@ -77,19 +77,6 @@
 
   function effects(ctx, f, tick, characterPose) {
     const centre = f.x + f.w / 2;
-    if (f.blue > 0 && f.name === 'Gojo') {
-      const x = centre + f.face * 105, y = f.y + 43;
-      for (let i = 0; i < 4; i++) {
-        ctx.strokeStyle = ['#1346b1', '#257ff0', '#4adaff', '#c5ffff'][i];
-        ctx.lineWidth = 7 - i;
-        ctx.beginPath();
-        const theta = tick * 0.13 + i * 1.7;
-        ctx.arc(x, y, 16 + i * 4, theta, theta + 4.4);
-        ctx.stroke();
-      }
-      ctx.fillStyle = '#93e8ff'; ctx.fillRect(Math.round(x - 6), Math.round(y - 6), 12, 12);
-      ctx.fillStyle = '#f0ffff'; ctx.fillRect(Math.round(x - 3), Math.round(y - 3), 6, 6);
-    }
     if (characterPose.state === 'punch' && f.attack === 7) {
       sparks(ctx, centre + f.face * 80, f.y + 47, '#f9e2b3');
     }
@@ -119,17 +106,9 @@
     ctx.drawImage(sheet.image, sourceX, sourceY, SOURCE_W, SOURCE_H,
                   -ORIGIN_X, foot - BOOT_Y, DRAW_W, DRAW_H);
     ctx.restore();
-    if (f.invul > 0 && f.name === 'Toji') {
-      // Purple speed trails during Heavenly Restriction, without moving the sprite's anatomy.
-      ctx.save(); ctx.globalAlpha = 0.35;
-      ctx.fillStyle = '#bf7ef5';
-      for (let i = 0; i < 3; i++)
-        ctx.fillRect(Math.round(cx - f.face * (35 + i * 19)), Math.round(f.y + 35 + i * 18), 27, 4);
-      ctx.restore();
-    }
     effects(ctx, f, tick, current);
     return true;
   }
-  window.SpriteAnimations = { draw, pose, ready: name => !!sheets[name]?.loaded,
+  window.SpriteAnimations = { draw, pose, image: name => sheets[name]?.loaded ? sheets[name].image : null, ready: name => !!sheets[name]?.loaded,
     state: name => sheets[name]?.loaded ? 'ready' : sheets[name]?.failed ? 'error' : 'loading' };
 })();
