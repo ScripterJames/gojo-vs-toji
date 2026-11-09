@@ -210,3 +210,22 @@ GitHub Actions [Hakone browser regression run 42598175333](https://github.com/Sc
 
 ### Session 6 follow-up — regression stabilization before publication
 A subsequent documentation-triggered workflow run on SHA 93487f55 failed the **pre-existing 250ms fixed-delay keyboard-movement assertion** in tests/test_hakone.py under a heavily delayed Chromium frame (no game code had changed). Updated that town test to focus the canvas and wait until the character actually moves more than 5px while holding ArrowRight, instead of assuming animation frames arrive within 250ms. This changes **test reliability only**, not gameplay timing or controls. [Branch run 42624074372](https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42624074372) passed all three suites on SHA **69a22d27d4d15a09dc29188551ffa27f74e3ada5**: 42 town, 66 arena, and 21 native-localhost-origin checks. Do not mistake the failed intermediate regression run for a shipped game defect or conceal the test instability.
+
+
+## Session 7: November 9, 2026 — CPU special coverage and combat fairness
+
+### Discovered defect and production changes
+- Inspected current `main`, `hakone-town-expansion`, the original development spec and current arena/town/Chromium tests before editing. Both branches initially pointed to `001c8524403f53ee7254aab481c5f6ac54229e0d`.
+- Reproduced a concrete AI defect with a deterministic V8 combat harness: the **Gojo CPU never cast Blue**; the **Toji CPU had no offensive special**, only a backwards evasive dash in response to a threatened attack. This meant the opponent's signature moves did not match the player-controlled fighters.
+- In `adventure/arena.html`, Gojo's CPU may now cast Blue when an opponent is approximately 65–420 px away and its cooldown has expired. Toji now chooses an **evasive backwards dash** when threatened by Blue or melee, or an **offensive forward striking dash** from approximately 105–245 px when not threatened. The existing 22-frame dash invulnerability, one-hit damage, special cooldown and player-controlled dash direction are unchanged.
+- Kept Hakari, Sukuna, Megumi and all other CPU special triggers unchanged. No changes to root index, `/preview/`, town items/interiors, save keys, upgrade costs, coins or character art.
+
+### Executed tests and limits
+- **5 direct V8 behavior checks passed on the candidate source** before commit: CPU Gojo starts Blue, CPU Toji starts a forward dash, Toji's forward dash lands exactly one 23-HP hit, Toji still retreats from active Blue, and CPU Hakari retains Jackpot.
+- Added deterministic, *real Chromium* regression checks to `tests/test_hakone_arena.py` for CPU Gojo, Toji offense and defense, and CPU special activation for each of the other fourteen fighters. Those browser checks require the GitHub Actions runner for final execution; do not claim they passed merely because the source was committed.
+- These tests verify character-special access and a controlled one-hit sequence, **not** player win-rate balance, realistic human control or a full public GitHub Pages match. Public-origin playthrough and 16-fighter CPU fairness sampling remain outstanding.
+
+### Next priorities
+1. Trigger the existing Chromium regression workflow on `hakone-town-expansion` and inspect results; fix failures before merging to main, verify Pages release.
+2. Run longer realistic CPU-versus-CPU (or scripted player-versus-CPU) matches with seeded randomness across the full roster and record win/loss, duration and stalemate rates; tune only based on observed results.
+3. Inspect rendered sprite frames and storefront interiors at native pixel resolution; refine silhouettes, contact effects, lighting and practical interior detail without disturbing E interactions.
