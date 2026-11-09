@@ -144,7 +144,7 @@ try:
         fight = arena.evaluate("""() => ({
           playing, p1:fighters[0].name,
           upgradedPunch:fighters[0].punchPower,
-          enemy:fighters[1].name, mode
+          enemy:fighters[1].name, mode:mode.value
         })""")
         check("Mahito starts CPU battle with purchased strength upgrade",
               fight["playing"] and fight["p1"] == "Mahito"
