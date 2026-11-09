@@ -16,7 +16,9 @@
     Nanami:{hair:'#e6c37c',hairShadow:'#a27a3e',skin:'#ddae88',shirt:'#c2ac81',light:'#e1d2ad',pants:'#536175',shoe:'#283744',accent:'#eed28b',ink:'#293b45'},
     Yuta:{hair:'#222736',hairShadow:'#4d515c',skin:'#e5bb9d',shirt:'#e7e4db',light:'#f6f3e9',pants:'#26364a',shoe:'#172434',accent:'#c7b5f2',ink:'#1d2738'},
     Choso:{hair:'#252430',hairShadow:'#4e4147',skin:'#d2a68f',shirt:'#e1dbcf',light:'#f3e9dc',pants:'#584957',shoe:'#2d2732',accent:'#df536b',ink:'#2b2938'},
-    Todo:{hair:'#263344',hairShadow:'#172232',skin:'#c58d73',shirt:'#4c4459',light:'#797086',pants:'#2f3c4d',shoe:'#192838',accent:'#c797ed',ink:'#1b2735'}
+    Todo:{hair:'#263344',hairShadow:'#172232',skin:'#c58d73',shirt:'#4c4459',light:'#797086',pants:'#2f3c4d',shoe:'#192838',accent:'#c797ed',ink:'#1b2735'},
+    Jogo:{hair:'#d98239',hairShadow:'#a95032',skin:'#d9b08a',shirt:'#734653',light:'#a26957',pants:'#423340',shoe:'#29262e',accent:'#ffbd6e',ink:'#2b2737'},
+    Mahito:{hair:'#a5c5d5',hairShadow:'#607d9c',skin:'#d2b9ad',shirt:'#4f6984',light:'#8296a3',pants:'#454b6f',shoe:'#272b43',accent:'#a7c4f5',ink:'#29374c'}
   };
   const cache=new Map(),SIZE=64,HEIGHT=50,SCALE=3,ORIGIN_X=18,GROUND=450;
   const clips={
@@ -29,7 +31,7 @@
     if(f.hp<=0){key='defeated';elapsed=0;}
     else if(f.attack>0&&['punch','kick'].includes(f.attackKind)){
       key=f.attackKind;elapsed=(key==='punch'?12:18)-f.attack;
-    }else if(f.jackpot>0||f.cleave>0||f.blackFlash>0||f.nail||f.resonance>0||f.sweep>0||f.speech>0||f.stomp>0||f.ratio>0||f.rika>0||f.pierce>0||f.boogie>0||f.newSpecialFlash>0){key='special';elapsed=tick;}
+    }else if(f.jackpot>0||f.cleave>0||f.blackFlash>0||f.nail||f.resonance>0||f.sweep>0||f.speech>0||f.stomp>0||f.ratio>0||f.rika>0||f.pierce>0||f.boogie>0||f.ember>0||f.transfigure>0||f.newSpecialFlash>0){key='special';elapsed=tick;}
     else if(f.flash>0&&f.invul===0){key='hurt';elapsed=Math.max(0,8-f.flash);}
     else if(f.y<GROUND-f.h-2){key='jump';elapsed=0;}
     else if(Math.abs(f.vx)>1){key='walk';elapsed=tick;}
@@ -83,6 +85,8 @@
     if(name==='Yuta'){block(10,21+bob,16,2,'#b0bac5');block(17,23+bob,2,11,'#d2d2e1');}
     if(name==='Choso'){block(12,20+bob,14,5,'#d7cec1');block(17,24+bob,3,9,'#b5475a');}
     if(name==='Todo'){block(10,21+bob,17,4,'#725b7a');block(20,27+bob,6,5,'#9a829d');}
+    if(name==='Jogo'){block(11,21+bob,15,3,'#b1785a');block(17,24+bob,3,8,'#6b333e');}
+    if(name==='Mahito'){block(12,19+bob,11,2,'#b7c7d5');block(10,26+bob,17,3,'#3c556f');block(21,24+bob,3,9,'#b6becf');}
     // Head and hair: no smooth vector curves or arbitrary subpixels.
     block(13,8+bob,14,13,p.ink);block(14,9+bob,12,12,p.skin);
     block(13,7+bob,14,6,p.hair);block(12,10+bob,3,7,p.hairShadow);
@@ -124,6 +128,19 @@
       block(14,2+bob,11,6,p.hair);block(17,-2+bob,8,7,p.hair);
       block(11,7+bob,20,6,p.hairShadow);block(12,12+bob,3,9,p.hair);
       block(24,13+bob,5,4,p.hair);
+    }else if(name==='Jogo'){
+      // Volcanic dome, single dark eye and ember-colored crown at pixel scale.
+      block(11,4+bob,19,13,'#7c5142');block(14,0+bob,13,10,'#d67e40');
+      block(17,-2+bob,8,4,'#f5b56a');block(19,-4+bob,4,4,'#ffdb83');
+      block(18,13+bob,7,5,'#c39a77');block(19,14+bob,4,3,'#2b3540');
+      block(10,18+bob,21,3,'#8b5d53');
+    }else if(name==='Mahito'){
+      // Flowing cool hair, dark neck seam and small patchwork face marks.
+      block(10,2+bob,20,9,p.hair);block(9,5+bob,5,22,p.hairShadow);
+      block(27,5+bob,5,20,p.hair);block(13,0+bob,14,6,'#c6d7e3');
+      block(12,12+bob,4,9,'#7c91a3');
+      block(23,15+bob,6,2,'#62758e');block(21,15+bob,2,6,'#62758e');
+      block(15,20+bob,15,2,'#cad6e2');
     }else if(name==='Maki'){
       block(12,6+bob,17,7,p.hair);block(26,2+bob,7,7,p.hair);
       block(29,5+bob,7,7,p.hairShadow);block(10,12+bob,5,13,p.hair);
@@ -156,6 +173,8 @@
       if(name==='Yuta'){block(35,8+bob,3,29,'#bcc8d7');block(35,7+bob,4,3,'#e8ebff');block(31,30+bob,12,3,'#333b51');}
       if(name==='Choso'){block(34,19+bob,14,4,'#de5375');block(45,17+bob,10,2,'#ffc1c8');}
       if(name==='Todo'){block(33,16+bob,9,8,'#c7a0ef');block(41,19+bob,7,3,'#eed5ff');}
+      if(name==='Jogo'){block(31,12+bob,10,10,'#df6a36');block(36,7+bob,5,7,'#ffc271');block(39,3+bob,3,5,'#ffe5a0');}
+      if(name==='Mahito'){block(31,16+bob,8,8,'#a6bae8');block(39,14+bob,9,3,'#d0dafa');block(46,11+bob,3,3,'#e5edff');}
     }
     if(key==='hurt')block(12,21,4,8,'#e6d8d5');
     cache.set(cacheKey,c);return c;
