@@ -16,7 +16,7 @@ const shopToggle=document.getElementById('shopToggle'), upgradeShop=document.get
 let shopOpen=false;
 if(window.UpgradeShop) UpgradeShop.mount(upgradeShop);
 shopToggle.onclick=()=>{shopOpen=!shopOpen;upgradeShop.hidden=!shopOpen;shopToggle.textContent=shopOpen?'✕ Close Upgrades':'🪙 Upgrades';if(shopOpen)window.UpgradeShop?.render();};onkeydown=e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys[e.key.toLowerCase()]=true;if(window.AbilityFX)AbilityFX.arm()};onkeyup=e=>keys[e.key.toLowerCase()]=false;
-function make(name,x,side){return{name,x,y:floor-105,vx:0,vy:0,w:54,h:105,side,face:side===0?1:-1,hp:100,cool:0,specialCool:0,attack:0,attackKind:'',attackHit:false,hitSpark:0,hitSparkX:0,hitSparkY:0,hitSparkColor:'#fbe9be',hitNumber:0,hitNumberTick:0,hitstun:0,hitDirection:0,invul:0,blue:0,blueExpiresAt:0,blueLastUpdateAt:0,blueExposureMs:0,blueDamageDealt:0,blueHitPulse:0,specialHeld:false,flash:0,aiDelay:0,dashHit:false,dashDirection:0}}
+function make(name,x,side){return{name,x,y:floor-105,vx:0,vy:0,w:54,h:105,side,face:side===0?1:-1,hp:100,cool:0,specialCool:0,attack:0,attackKind:'',attackHit:false,hitSpark:0,hitSparkX:0,hitSparkY:0,hitSparkColor:'#fbe9be',hitNumber:0,hitNumberTick:0,hitstun:0,hitDirection:0,invul:0,blue:0,blueExpiresAt:0,blueLastUpdateAt:0,blueExposureMs:0,blueDamageDealt:0,blueHitPulse:0,specialHeld:false,flash:0,aiDelay:0,dashHit:false,dashDirection:0,cpuEvade:false}}
 function start(){if(window.AbilityFX){AbilityFX.arm();AbilityFX.play('start');}const left=make(c1.value,200,0),right=make(c2.value,700,1);
 if(window.UpgradeShop){UpgradeShop.apply(left);if(mode.value==='pvp') UpgradeShop.apply(right);else UpgradeShop.base(right);}
 HakoneRoster.init(left);HakoneRoster.init(right);
@@ -37,15 +37,21 @@ function action(f,type){if(!playing||f.hitstun>0||(type==='special'&&(f.specialC
 f.specialCool=f.name==='Gojo'?420:300;
 if(HakoneRoster.roster.includes(f.name) && f.name!=='Gojo' && f.name!=='Toji'){HakoneRoster.onCast(f,other);return;}
 if(f.name==='Gojo'){const now=performance.now();f.blue=300;f.blueExpiresAt=now+BLUE_DURATION_MS;f.blueLastUpdateAt=now;f.blueExposureMs=0;f.blueDamageDealt=0;f.blueTicks=0;for(let i=0;i<24;i++)particles.push({x:f.x+f.w/2+f.face*80,y:f.y+40,vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*8,life:32,color:'#40caff'});}else{f.invul=22;f.dashHit=false;
-f.dashDirection=(f.side===1&&mode.value==='cpu'?-f.face:f.face);
+// CPU Toji may dash aggressively or retreat from a threat.
+f.dashDirection=(f.side===1&&mode.value==='cpu'&&f.cpuEvade?-f.face:f.face);f.cpuEvade=false;
 f.vx=f.dashDirection*19;f.flash=22;}}else{f.attack=type==='punch'?12:18;f.attackKind=type;f.attackHit=false;f.cool=type==='punch'?23:33;}}
 function updateF(f,other,ctrl,cpu){if(f.invul===0 && f.blackFlash<=0 && f.speech<=0 && f.ratio<=0 && f.pierce<=0 && f.transfigure<=0)f.face=other.x>f.x?1:-1;f.cool=Math.max(0,f.cool-1);f.specialCool=Math.max(0,f.specialCool-1);f.attack=Math.max(0,f.attack-1);f.invul=Math.max(0,f.invul-1);const now=performance.now();const blueActiveMs=f.blueExpiresAt?Math.max(0,Math.min(now,f.blueExpiresAt)-f.blueLastUpdateAt):0;f.blueLastUpdateAt=now;f.blue=f.blueExpiresAt?Math.max(0,Math.ceil((f.blueExpiresAt-now)*.06)):0;f.flash=Math.max(0,f.flash-1);f.blueHitPulse=Math.max(0,f.blueHitPulse-1);f.hitSpark=Math.max(0,f.hitSpark-1);f.hitNumberTick=Math.max(0,f.hitNumberTick-1);let move=0;if(cpu){let dist=other.x-f.x;move=Math.abs(dist)>100?Math.sign(dist):Math.random()<.03?-Math.sign(dist):0;if(f.aiDelay--<=0){
 f.aiDelay=12+Math.random()*20;
 const threatenedByBlue=other.name==='Gojo'&&other.blue>0&&Math.abs((f.x+f.w/2)-(other.x+other.w/2+other.face*105))<170;
 const threatenedByStrike=other.attack>0&&other.face===Math.sign(f.x-other.x)&&Math.abs(dist)<(other.attackKind==='kick'?112:88)&&Math.abs(other.y-f.y)<85;
-if(HakoneRoster.roster.includes(f.name)&&f.name!=='Gojo'&&f.name!=='Toji'&&f.specialCool===0&&Math.abs(dist)<320&&Math.random()<.32){
- action(f,'special');
- }else if(f.name==='Toji'&&(threatenedByBlue||threatenedByStrike)&&f.specialCool===0){
+// Every CPU fighter can access their character-specific special.
+if(f.name==='Gojo'&&f.specialCool===0&&Math.abs(dist)>=65&&Math.abs(dist)<420&&Math.random()<.34){
+action(f,'special');
+}else if(f.name==='Toji'&&f.specialCool===0&&(threatenedByBlue||threatenedByStrike)){
+f.cpuEvade=true;action(f,'special');
+}else if(f.name==='Toji'&&f.specialCool===0&&Math.abs(dist)>=105&&Math.abs(dist)<245&&Math.random()<.32){
+f.cpuEvade=false;action(f,'special');
+}else if(f.name!=='Gojo'&&f.name!=='Toji'&&HakoneRoster.roster.includes(f.name)&&f.specialCool===0&&Math.abs(dist)<320&&Math.random()<.32){
 action(f,'special');
 }else if(Math.abs(dist)<115){
 action(f,Math.random()<.55?'punch':'kick');
