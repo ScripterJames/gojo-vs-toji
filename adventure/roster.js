@@ -3,7 +3,7 @@
    No chance-based wagering: Hakari's "Jackpot" is a timed power-up on a cooldown. */
 (() => {
   'use strict';
-  const ROSTER=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki'];
+  const ROSTER=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami'];
   const NAMES={
     Gojo:'Blue · five-second nonlethal vortex',
     Toji:'Heavenly Restriction · evasive striking dash',
@@ -12,7 +12,10 @@
     Megumi:'Divine Dog · eight-second companion attack',
     Yuji:'Black Flash · close-range lightning lunge',
     Nobara:'Straw Doll · flying nail and delayed Resonance',
-    Maki:'Weapon Sweep · long-reach staff counter'
+    Maki:'Weapon Sweep · long-reach staff counter',
+    Toge:'Cursed Speech · short-range stunning shout',
+    Panda:'Guard Stomp · defensive shield and ground impact',
+    Nanami:'Ratio Strike · precise delayed 7:3 weak-point cut'
   };
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   function init(f) {
@@ -21,6 +24,9 @@
     f.blackFlash=0;f.blackFlashHit=false;f.blackFlashDir=f.face;
     f.nail=null;f.resonance=0;f.resonanceTarget=null;
     f.sweep=0;f.sweepHit=false;
+    f.speech=0;f.speechDir=f.face;
+    f.stomp=0;f.stompHit=false;
+    f.ratio=0;f.ratioDir=f.face;
     return f;
   }
   function onCast(f,other) {
@@ -43,6 +49,13 @@
         f.newSpecialFlash=16;f.specialCool=375;return true;
       case 'Maki':
         f.sweep=25;f.sweepHit=false;f.newSpecialFlash=18;f.specialCool=345;return true;
+      case 'Toge':
+        f.speech=22;f.speechDir=f.face;f.newSpecialFlash=22;f.specialCool=420;return true;
+      case 'Panda':
+        f.stomp=30;f.stompHit=false;f.invul=Math.max(f.invul,20);
+        f.newSpecialFlash=30;f.specialCool=420;return true;
+      case 'Nanami':
+        f.ratio=28;f.ratioDir=f.face;f.newSpecialFlash=28;f.specialCool=360;return true;
       default: return false;
     }
   }
@@ -64,7 +77,7 @@
   }
   function tick(f,other) {
     if(f.newSpecialFlash>0)f.newSpecialFlash--;
-    if(f.hp<=0){f.jackpot=0;f.cleave=0;f.pet=0;f.blackFlash=0;f.nail=null;f.resonance=0;f.sweep=0;return;}
+    if(f.hp<=0){f.jackpot=0;f.cleave=0;f.pet=0;f.blackFlash=0;f.nail=null;f.resonance=0;f.sweep=0;f.speech=0;f.stomp=0;f.ratio=0;return;}
     if(f.jackpot>0) {
       f.jackpot--;f.jackpotAge++;
       if(f.jackpotAge%60===0)f.hp=Math.min(f.maxHp||100,f.hp+1+(f.specialPower||0));
@@ -125,6 +138,34 @@
         other.vx=f.face*7;
       }
     }
+    if(f.speech>0){
+      f.speech--;
+      if(f.speech===13){
+        const dx=f.speechDir*((other.x+other.w/2)-(f.x+f.w/2));
+        if(dx>=-18&&dx<=240&&Math.abs(other.y-f.y)<100){
+          impact(f,other,5+2*(f.specialPower||0),'#b8f2f0',42+8*(f.specialPower||0));
+        }
+      }
+    }
+    if(f.stomp>0){
+      f.stomp--;
+      if(f.stomp===14&&!f.stompHit &&
+         Math.abs((other.x+other.w/2)-(f.x+f.w/2))<=135 &&
+         Math.abs(other.y-f.y)<100){
+        if(impact(f,other,18+4*(f.specialPower||0),'#f9dcb4',13)){
+          f.stompHit=true;other.vy=Math.min(other.vy||0,-5);
+        }
+      }
+    }
+    if(f.ratio>0){
+      f.ratio--;
+      if(f.ratio===12){
+        const dx=f.ratioDir*((other.x+other.w/2)-(f.x+f.w/2));
+        if(dx>=-17&&dx<=155&&Math.abs(other.y-f.y)<95){
+          impact(f,other,24+6*(f.specialPower||0),'#f8d67c',14);
+        }
+      }
+    }
   }
   function behind(ctx,f,frame){
     if(f.jackpot>0){
@@ -183,6 +224,35 @@
       ctx.moveTo(x-12,y-12);ctx.lineTo(x+12,y+12);
       ctx.moveTo(x+12,y-12);ctx.lineTo(x-12,y+12);ctx.stroke();ctx.restore();
     }
+    if(f.speech>0){
+      const age=22-f.speech,origin=f.x+f.w/2+f.speechDir*28,y=f.y+35;
+      ctx.save();ctx.lineWidth=3;ctx.strokeStyle='#a4f2f1';
+      for(let i=0;i<3;i++){
+        const radius=14+age*8+i*20;
+        ctx.globalAlpha=Math.max(0,.8-age/26-i*.18);
+        ctx.beginPath();ctx.ellipse(origin+f.speechDir*radius*.65,y,radius*.65,17+i*14,0,0,Math.PI*2);ctx.stroke();
+      }
+      ctx.restore();
+    }
+    if(f.stomp>0){
+      const age=30-f.stomp,center=f.x+f.w/2,ground=f.y+f.h;
+      ctx.save();ctx.strokeStyle=f.invul>0?'#d9f4ff':'#f4c68b';ctx.lineWidth=5;
+      ctx.globalAlpha=f.invul>0?.55:Math.max(.15,1-age/33);
+      ctx.beginPath();ctx.ellipse(center,f.y+47,49,70,0,0,Math.PI*2);ctx.stroke();
+      if(f.stomp<=14){ctx.strokeStyle='#e9af75';ctx.lineWidth=4;
+      for(let j=0;j<3;j++){ctx.beginPath();ctx.ellipse(center,ground,50+age*3+j*19,6+j*2,0,0,Math.PI);ctx.stroke();}}
+      ctx.restore();
+    }
+    if(f.ratio>0){
+      const cx=f.x+f.w/2,side=f.ratioDir,y=f.y+49;
+      ctx.save();ctx.strokeStyle=f.ratio<=12?'#fff0ab':'#d4bc7b';
+      ctx.lineWidth=3;ctx.globalAlpha=.75;
+      ctx.beginPath();ctx.moveTo(cx+side*12,y-33);ctx.lineTo(cx+side*149,y+31);ctx.stroke();
+      ctx.strokeStyle='#675545';ctx.beginPath();
+      ctx.moveTo(cx+side*109,y+12);ctx.lineTo(cx+side*119,y-10);ctx.stroke();
+      ctx.fillStyle='#f2d990';ctx.font='bold 15px monospace';ctx.textAlign='center';
+      ctx.fillText('7:3',cx+side*90,y-35);ctx.restore();
+    }
     if(f.sweep>0){
       const age=25-f.sweep,angle=-.65+Math.min(1,age/18)*1.7;
       const x=f.x+f.w/2,y=f.y+52,dir=f.face;
@@ -205,6 +275,9 @@
     if(f.nail)return 'NAIL IN FLIGHT';
     if(f.resonance>0)return 'RESONANCE '+(f.resonance/60).toFixed(1)+'s';
     if(f.sweep>0)return 'WEAPON SWEEP';
+    if(f.speech>0)return 'CURSED SPEECH';
+    if(f.stomp>0)return f.invul>0?'PANDA GUARD':'PANDA STOMP';
+    if(f.ratio>0)return 'RATIO 7:3';
     return f.specialCool?'SPECIAL '+Math.ceil(f.specialCool/60)+'s':'SPECIAL READY';
   }
   window.HakoneRoster={roster:ROSTER,descriptions:NAMES,init,onCast,melee,tick,behind,front,status};
