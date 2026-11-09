@@ -38,10 +38,33 @@ new layer using explicitly stubbed legacy art/data: eight floor caches, all
 The screenshot was visually inspected at reduced overview size. This was an
 isolated art test, not full game or public-origin validation.
 
-The new native-origin suite was Python-syntax checked locally. Its execution
-against the complete repository and existing regressions must be confirmed
-from the branch workflow before publication. Do not call the candidate live
-until the actual main update and Pages deployment are confirmed.
+The new native-origin suite was Python-syntax checked locally. Complete
+repository integration was subsequently verified by the branch workflow below.
+
+## Complete repository Chromium verification — PASS
+GitHub Actions run 42644945688 on exact source commit
+`49e24748f0054027b256d4b7d0a1efe2c614c24f` completed successfully:
+https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42644945688
+
+Job 129255574159 logs confirm four passing suites:
+- 42 town checks, with page.set_content and an explicit storage test double.
+- 84 arena checks, with page.set_content, explicit storage substitute and a
+  deterministic combat clock, including all sixteen CPU special activations.
+- 21 native-localhost-origin integration checks, with real storage, PNG loading,
+  actual arena iframe, upgrade/coin synchronization, reload and leave-fight paths.
+- 19 new native-localhost-origin shop-art checks, including eight unique cached
+  floors, 28 distinct nonempty icons, unchanged geometry/state, buying and
+  preparing smoothies/bento/coffee, exact original prices, persistent prepared
+  items after reload, no duplicate starter gift, sixteen fighter selectors,
+  returning from the arena to the same shop, no abandon reward, mobile layout,
+  and no JavaScript exceptions or failed local script/sprite requests.
+
+There are 166 passing assertions across these four suites. They are not 166
+human playthroughs. Direct enter/interact helpers position some fixtures;
+CPU-reward testing reduces the opponent's HP before a real keyboard punch.
+These tests do NOT establish public GitHub Pages-origin browser behavior or
+fairness in full natural matches. Deployment must be checked separately.
+This documentation-only follow-up changes none of the tested source files.
 
 ## Research
 - Original author, SLYNYRD Pixelblog 35, Top Down Interiors:
