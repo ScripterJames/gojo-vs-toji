@@ -229,3 +229,9 @@ A subsequent documentation-triggered workflow run on SHA 93487f55 failed the **p
 1. Trigger the existing Chromium regression workflow on `hakone-town-expansion` and inspect results; fix failures before merging to main, verify Pages release.
 2. Run longer realistic CPU-versus-CPU (or scripted player-versus-CPU) matches with seeded randomness across the full roster and record win/loss, duration and stalemate rates; tune only based on observed results.
 3. Inspect rendered sprite frames and storefront interiors at native pixel resolution; refine silhouettes, contact effects, lighting and practical interior detail without disturbing E interactions.
+
+
+### Session 7 branch validation — November 9, 2026
+- GitHub Actions [run 42632918057](https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42632918057) **passed** on exact branch commit `c6353ba5242bf1007ff23665ea952b5be1888872` after the new CPU AI changes and tests. Parsed job logs confirm **42 town Chromium checks, 84 arena Chromium checks (66 existing plus 18 new deterministic CPU-special checks), and 21 real-localhost-origin Chromium integration checks**.
+- The 18 new arena checks verify Gojo CPU casts Blue, Toji CPU offensive direction/hit and defensive direction, and one AI special activation per remaining 14 fighters. All passed on actual Chromium; this does **not** establish difficulty fairness or public-origin persistence.
+- The tested game changes were fast-forwarded to `main` with a checked expected branch head. Pages deployment for that commit is checked separately; do not conflate the regression success with CDN publication.
