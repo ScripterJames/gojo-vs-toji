@@ -66,8 +66,8 @@ with sync_playwright() as p:
     page.set_content(html)
     page.wait_for_timeout(150)
     roster = page.evaluate("HakoneRoster.roster")
-    check("Fourteen playable choices", len(roster) == 14, roster)
-    for name in ["Toge", "Panda", "Nanami", "Yuta", "Choso", "Todo"]:
+    check("Sixteen playable choices", len(roster) == 16, roster)
+    for name in ["Toge", "Panda", "Nanami", "Yuta", "Choso", "Todo", "Jogo", "Mahito"]:
         check(name + " has a sprite", page.evaluate(
             "(n) => HakoneArtFighters.ready(n)", name))
         check(name + " has a special description", bool(page.evaluate(
@@ -75,9 +75,9 @@ with sync_playwright() as p:
         check(name + " has an upgrade bank", page.evaluate(
             "(n) => !!UpgradeShop.levels[n]", name))
     check("Initial 50 coins", page.evaluate("UpgradeShop.coins") == 50)
-    check("Arena has 14 options for each player",
-          page.locator("#c1 option").count() == 14
-          and page.locator("#c2 option").count() == 14)
+    check("Arena has 16 options for each player",
+          page.locator("#c1 option").count() == 16
+          and page.locator("#c2 option").count() == 16)
 
     controls = "{left:'arrowleft',right:'arrowright',jump:'arrowup',jumpAlt:' ',punch:'f',kick:'d',special:'a'}"
     def start(name, enemy="Gojo", gap=110):
@@ -195,8 +195,61 @@ with sync_playwright() as p:
           page.evaluate("fighters[0].x<fighters[1].x && fighters[1].hitstun==0"))
     check("Boogie Woogie causes no direct HP damage",page.evaluate("fighters[1].hp")==100)
 
+    # Jogo: fixed-position eruption warning with an escape window.
+    start("Jogo", gap=200)
+    x=cast(25)
+    check("Volcanic Eruption has delayed impact",x["hp"]==78,x)
+    start("Jogo", gap=200)
+    page.keyboard.down("a")
+    page.evaluate(f"""() => {{
+        for(let i=0;i<10;i++)updateF(fighters[0],fighters[1],{controls},false);
+        fighters[1].x=700;
+        for(let i=0;i<30;i++)updateF(fighters[0],fighters[1],{controls},false);
+    }}""")
+    page.keyboard.up("a")
+    check("Eruption can be dodged",page.evaluate("fighters[1].hp")==100)
+    start("Jogo", gap=200)
+    page.evaluate("fighters[1].invul=70")
+    x=cast(25)
+    check("Eruption respects invulnerability",x["hp"]==100,x)
+    page.evaluate("UpgradeShop.award(35)")
+    check("Buy Jogo special rank",page.evaluate('UpgradeShop.buy("Jogo","technique")'))
+    start("Jogo",gap=200)
+    x=cast(25)
+    check("Jogo rank boosts damage",x["hp"]==73,x)
+
+    # Mahito: one short-range touch with a visible temporary movement slowdown.
+    start("Mahito",gap=105)
+    x=cast(15)
+    check("Transfiguration touch hits once",x["hp"]==84,x)
+    check("Transfiguration applies temporary slow",page.evaluate("fighters[1].transfigSlow")==150)
+    page.evaluate("""() => {
+        fighters[1].hitstun=0;
+        keys.l=true;
+        const f=fighters[1],previous=f.x;
+        updateF(f,fighters[0],{left:'j',right:'l',jump:'i',punch:'n',kick:'m',special:'o'},false);
+        window.__slowDistance=f.x-previous;
+        keys.l=false;
+    }""")
+    check("Slow reduces actual movement",
+          abs(page.evaluate("window.__slowDistance")-2.86)<0.08,
+          page.evaluate("window.__slowDistance"))
+    start("Mahito",gap=320)
+    x=cast(18)
+    check("Transfiguration misses out of range",x["hp"]==100,x)
+    start("Mahito",gap=100)
+    page.evaluate("fighters[1].invul=80")
+    x=cast(18)
+    check("Transfiguration obeys invulnerability",x["hp"]==100,x)
+    page.evaluate("UpgradeShop.award(35)")
+    check("Buy Mahito special rank",page.evaluate('UpgradeShop.buy("Mahito","technique")'))
+    start("Mahito",gap=103)
+    x=cast(15)
+    check("Mahito rank boosts damage and slow",x["hp"]==80 and
+          page.evaluate("fighters[1].transfigSlow")==180,x)
+
     # Render every new fighter with its real 2D canvas drawing path.
-    for name in ["Toge", "Panda", "Nanami", "Yuta", "Choso", "Todo"]:
+    for name in ["Toge", "Panda", "Nanami", "Yuta", "Choso", "Todo", "Jogo", "Mahito"]:
         start(name, "Gojo", gap=100)
         page.evaluate("draw()")
         check(name + " canvas contains colored pixels",
