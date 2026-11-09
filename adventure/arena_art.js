@@ -10,7 +10,10 @@
     Megumi:{hair:'#1e2b40',hairShadow:'#35465c',skin:'#d9ab90',shirt:'#26344d',light:'#45617c',pants:'#252e44',shoe:'#1c2132',accent:'#aebeff',ink:'#182034'},
     Yuji:{hair:'#d78b9d',hairShadow:'#a65b78',skin:'#dfab93',shirt:'#7b364a',light:'#bd5266',pants:'#263448',shoe:'#172332',accent:'#8d9bff',ink:'#262438'},
     Nobara:{hair:'#b86e3c',hairShadow:'#7b492e',skin:'#e5b493',shirt:'#2e435c',light:'#54677a',pants:'#282f43',shoe:'#181e2c',accent:'#d7a46a',ink:'#202738'},
-    Maki:{hair:'#1f3540',hairShadow:'#132632',skin:'#d6ab89',shirt:'#456450',light:'#78907a',pants:'#33463d',shoe:'#1d2a2d',accent:'#b6c6a7',ink:'#17282b'}
+    Maki:{hair:'#1f3540',hairShadow:'#132632',skin:'#d6ab89',shirt:'#456450',light:'#78907a',pants:'#33463d',shoe:'#1d2a2d',accent:'#b6c6a7',ink:'#17282b'},
+    Toge:{hair:'#d9e5dc',hairShadow:'#8ca39d',skin:'#d6ad96',shirt:'#42586a',light:'#7795a8',pants:'#2d3849',shoe:'#1a2633',accent:'#a0e5df',ink:'#1a2b3b'},
+    Panda:{hair:'#f3eddd',hairShadow:'#202632',skin:'#f3eadd',shirt:'#eee9da',light:'#c5c9c0',pants:'#292e3c',shoe:'#18202b',accent:'#f4c889',ink:'#202734'},
+    Nanami:{hair:'#e6c37c',hairShadow:'#a27a3e',skin:'#ddae88',shirt:'#c2ac81',light:'#e1d2ad',pants:'#536175',shoe:'#283744',accent:'#eed28b',ink:'#293b45'}
   };
   const cache=new Map(),SIZE=64,HEIGHT=50,SCALE=3,ORIGIN_X=18,GROUND=450;
   const clips={
@@ -23,7 +26,7 @@
     if(f.hp<=0){key='defeated';elapsed=0;}
     else if(f.attack>0&&['punch','kick'].includes(f.attackKind)){
       key=f.attackKind;elapsed=(key==='punch'?12:18)-f.attack;
-    }else if(f.jackpot>0||f.cleave>0||f.blackFlash>0||f.nail||f.resonance>0||f.sweep>0||f.newSpecialFlash>0){key='special';elapsed=tick;}
+    }else if(f.jackpot>0||f.cleave>0||f.blackFlash>0||f.nail||f.resonance>0||f.sweep>0||f.speech>0||f.stomp>0||f.ratio>0||f.newSpecialFlash>0){key='special';elapsed=tick;}
     else if(f.flash>0&&f.invul===0){key='hurt';elapsed=Math.max(0,8-f.flash);}
     else if(f.y<GROUND-f.h-2){key='jump';elapsed=0;}
     else if(Math.abs(f.vx)>1){key='walk';elapsed=tick;}
@@ -71,6 +74,9 @@
     if(name==='Yuji'){block(10,20+bob,16,4,'#aa4457');block(12,22+bob,3,9,'#e16b78');}
     if(name==='Nobara'){block(10,31+bob,17,7,'#25334b');block(12,35+bob,4,4,'#465a70');block(21,35+bob,4,4,'#465a70');}
     if(name==='Maki'){block(12,21+bob,11,3,'#718970');block(14,24+bob,4,8,'#b1c8a7');}
+    if(name==='Toge'){block(9,20+bob,18,10,'#7f9ba9');block(11,18+bob,15,7,'#b4d1d1');}
+    if(name==='Panda'){block(7,19+bob,24,17,'#eae8dc');block(8,23+bob,5,7,'#262e3c');block(26,23+bob,5,7,'#262e3c');}
+    if(name==='Nanami'){block(17,21+bob,3,12,'#475c77');block(17,21+bob,3,7,'#e0b85d');}
     // Head and hair: no smooth vector curves or arbitrary subpixels.
     block(13,8+bob,14,13,p.ink);block(14,9+bob,12,12,p.skin);
     block(13,7+bob,14,6,p.hair);block(12,10+bob,3,7,p.hairShadow);
@@ -88,6 +94,17 @@
       block(12,4+bob,17,7,p.hair);
       block(10,15+bob,5,10,p.hairShadow);block(25,14+bob,5,10,p.hair);
       block(14,7+bob,15,2,p.hairShadow);
+    }else if(name==='Toge'){
+      block(11,3+bob,18,8,p.hair);block(9,6+bob,7,9,p.hair);
+      block(24,6+bob,7,8,p.hairShadow);block(11,17+bob,19,5,'#b4d1d1');
+    }else if(name==='Panda'){
+      block(10,3+bob,8,7,'#232a37');block(23,3+bob,8,7,'#232a37');
+      block(12,8+bob,20,15,'#f0e8da');block(12,12+bob,7,7,'#252c37');
+      block(23,12+bob,7,7,'#252c37');block(19,19+bob,5,3,'#273341');
+    }else if(name==='Nanami'){
+      block(12,6+bob,18,7,'#e8c780');block(12,4+bob,12,4,'#c39c54');
+      block(25,9+bob,6,3,'#ddbc74');block(15,15+bob,16,3,'#273b48');
+      block(15,15+bob,6,2,'#71a6b2');block(24,15+bob,7,2,'#71a6b2');
     }else if(name==='Maki'){
       block(12,6+bob,17,7,p.hair);block(26,2+bob,7,7,p.hair);
       block(29,5+bob,7,7,p.hairShadow);block(10,12+bob,5,13,p.hair);
@@ -114,6 +131,9 @@
       if(name==='Nobara'){block(37,19+bob,3,18,'#a6aab3');block(36,15+bob,6,4,'#d6b079');}
       if(name==='Maki'){block(30,8+bob,3,31,'#cad0c0');block(30,4+bob,5,6,'#718879');}
       if(name==='Yuji'){block(36,16+bob,7,4,'#6175e3');block(40,12+bob,4,4,'#afc4ff');}
+      if(name==='Toge'){block(35,13+bob,6,3,'#d3f8f2');block(41,9+bob,4,2,'#8bdad4');}
+      if(name==='Panda'){block(34,15+bob,7,7,'#f2e8c9');block(40,18+bob,4,4,'#273342');}
+      if(name==='Nanami'){block(32,14+bob,7,2,'#e9cd86');block(37,11+bob,4,2,'#fff0b7');}
     }
     if(key==='hurt')block(12,21,4,8,'#e6d8d5');
     cache.set(cacheKey,c);return c;
