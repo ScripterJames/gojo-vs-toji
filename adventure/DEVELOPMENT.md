@@ -91,3 +91,7 @@ Keep root index.html and preview/ unchanged. Read both branches before work; nev
 2. Expand 2–3 genuinely distinct additional fighters (Yuji, Nobara, Maki suggested), update ranks/traveler sprites and test unique mechanics before claiming them live.
 3. Give 7-Eleven a distinctive tile floor and readable machine signs; improve close-up interior object outlines and E prompts without breaking the existing 29 town interactions.
 4. Keep performance stable by caching low-res frames; do not draw procedural sprites on every frame.
+
+
+### Publication update — November 8, late evening PST
+After verifying that main had not advanced, fast-forwarded main to commit \`fd47e0f69750d230a3ccd28a3bd158e2d695f647\`. GitHub Pages deployment run 42578801316 completed **successfully** (https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42578801316). The newly published route should be \`/adventure/arena.html\`, linked from \`/adventure/\`. Direct external HTML/browser retrieval was blocked by the research browser and is **not** equivalent to live interaction testing. A further sprite-only V8 test verified three newly generated cached 64x50 strike frames, a visible forward punch silhouette with furthest painted x=57, and cache reuse across repeated draws. Preserve this caveat in morning reporting.
