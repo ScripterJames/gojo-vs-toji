@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const D=HakoneData,A=HakoneArt,$=id=>document.getElementById(id);
-  const roster=['Gojo','Toji','Hakari','Sukuna','Megumi'];
+  const roster=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki'];
   const canvas=$('world'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const SAVE='hakone-life-town-v1',COINS='gojo-vs-toji-arcade-coins-v1',LEVELS='gojo-vs-toji-upgrade-levels-v1',GIFT='gojo-vs-toji-upgrade-starter-v1';
   const memoryStore={};
@@ -97,7 +97,8 @@
       btn.onclick=()=>{if(!pay(price))return;levels[name]={...rank,[id]:level+1};write(LEVELS,JSON.stringify(levels));save();sound('purchase');notify(name+' upgraded. Start a new fight to use it.');upgrade();};row.append(words,btn);$('panelBody').append(row);
     }
   }
-  function selectFighter(){panel('Choose your traveler','Five playable fighters in Hakone Arena, each with a different special move. Your choice is saved for the next fight.',roster.map(name=>({label:name+(name==='Hakari'?' · Jackpot':name==='Sukuna'?' · Cleave':name==='Megumi'?' · Divine Dog':name==='Gojo'?' · Blue':' · Heavenly Restriction'),run:()=>{state.fighter=name;save();close();}})));}
+  const fighterMoves={Gojo:'Blue',Toji:'Heavenly Restriction',Hakari:'Jackpot',Sukuna:'Cleave',Megumi:'Divine Dog',Yuji:'Black Flash',Nobara:'Nail + Resonance',Maki:'Weapon Sweep'};
+  function selectFighter(){panel('Choose your traveler','Eight playable fighters in Hakone Arena, each with a different special move. Your choice is saved for the next fight.',roster.map(name=>({label:name+' · '+fighterMoves[name],run:()=>{state.fighter=name;save();close();}})));}
   function interior(id){
     const o=(key,type,name,x,y,w=32,h=32,extra={})=>({id:key,type,name,x,y,w,h,solid:true,...extra});
     const all=[o('exit','exit','Return to town',296,438,48,14,{solid:false}),o('window','sign','Window view',296,44,32,16),o('seat','seat','Take a seat',380,322,38,18)];
@@ -187,7 +188,7 @@
       if(state.room==='inn'&&o.id==='host'){
         panel('Innkeeper','Welcome to Maple Ryokan. Our delivery from 7-Eleven should be arriving soon.',[{label:'Deliver the parcel · +25 coins',disabled:!state.parcel||state.flags.delivered,run:()=>{if(!state.parcel||state.flags.delivered)return;state.parcel=false;state.flags.delivered=true;award(25);save();close();notify('Delivery complete. Thank you! +25 coins.');}}]);return;
       }
-      if(state.room==='dojo'){panel('Dojo trainer','Train at the wooden dummy, spend coins on upgrades, or challenge the CPU. Leaving a fight gives no victory reward.',[{label:'Fighter upgrades',run:upgrade},{label:'Enter arena',run:arena},{label:'Choose Gojo / Toji',run:selectFighter}]);return;}
+      if(state.room==='dojo'){panel('Dojo trainer','Train at the wooden dummy, spend coins on upgrades, or challenge the CPU. Leaving a fight gives no victory reward.',[{label:'Fighter upgrades',run:upgrade},{label:'Enter arena',run:arena},{label:'Choose fighter',run:selectFighter}]);return;}
       if(state.room==='onsen'){panel('Bath attendant','The pool is straight ahead. A visit costs 15 game coins, or 8 with your own towel. There is no fighting in town.');return;}
       if(state.room&&D.shops[state.room].stock.length){shop(D.shops[state.room].name,D.shops[state.room].stock);return;}
       panel(o.name,o.id==='tourist'?'Mika: I am collecting town stamps! Step into six different buildings and check your map. The sweets shop has a little puzzle box.':'Ren: Please recycle your bottles and cans. The riverside benches are free, and the clear umbrella is useful when it rains.');return;
