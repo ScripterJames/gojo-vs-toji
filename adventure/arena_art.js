@@ -23,7 +23,7 @@
     if(f.hp<=0){key='defeated';elapsed=0;}
     else if(f.attack>0&&['punch','kick'].includes(f.attackKind)){
       key=f.attackKind;elapsed=(key==='punch'?12:18)-f.attack;
-    }else if(f.jackpot>0||f.cleave>0||f.pet>0||f.blackFlash>0||f.nail||f.resonance>0||f.sweep>0||f.newSpecialFlash>0){key='special';elapsed=tick;}
+    }else if(f.jackpot>0||f.cleave>0||f.blackFlash>0||f.nail||f.resonance>0||f.sweep>0||f.newSpecialFlash>0){key='special';elapsed=tick;}
     else if(f.flash>0&&f.invul===0){key='hurt';elapsed=Math.max(0,8-f.flash);}
     else if(f.y<GROUND-f.h-2){key='jump';elapsed=0;}
     else if(Math.abs(f.vx)>1){key='walk';elapsed=tick;}
