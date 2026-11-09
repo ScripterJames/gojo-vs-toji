@@ -14,7 +14,7 @@
     { id:'technique', name:'Special', icon:'✨', detail:'Enhances this fighter special move' }
   ];
   const blank = () => ({power:0,vitality:0,agility:0,technique:0});
-  const levels = {Gojo:blank(), Toji:blank()};
+  const levels = Object.fromEntries(characters.map(name=>[name,blank()]));
   let coins = 0, mountPoint = null, onChange = null;
   const read = k => { try { return localStorage.getItem(k); } catch (_) { return null; } };
   const write = (k,v) => { try { localStorage.setItem(k,v); } catch (_) {} };
