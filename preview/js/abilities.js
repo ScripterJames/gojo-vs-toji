@@ -119,6 +119,39 @@
     return clamp((300 - f.blue) / 12, 0.16, 1) * clamp(f.blue / 15, 0, 1);
   }
 
+  // A visible energy stream links the blue vortex to an affected opponent.
+  function blueTether(ctx, f, other, tick) {
+    if (!other || other.hp <= 0 || other.invul > 0) return;
+    const from = bluePosition(f);
+    const x = other.x + other.w / 2, y = other.y + other.h * .46;
+    if (Math.abs(x - from.x) >= 475) return;
+    const power = blueStrength(f);
+    ctx.save();
+    ctx.globalCompositeOperation = 'screen';
+    for (let strand = 0; strand < 3; strand++) {
+      ctx.beginPath();
+      for (let i = 0; i <= 16; i++) {
+        const t = i / 16;
+        const wave = Math.sin(t * 20 - tick * .35 + strand * 2) * 10 * Math.sin(t * Math.PI);
+        const px = from.x + (x - from.x) * t;
+        const py = from.y + (y - from.y) * t + wave;
+        if (i === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.strokeStyle = ['#c1faff','#4bcbff','#4770ff'][strand];
+      ctx.globalAlpha = power * [.63,.43,.31][strand];
+      ctx.lineWidth = [2.5,2,1.5][strand];
+      ctx.stroke();
+    }
+    for (let i = 0; i < 7; i++) {
+      const t = ((tick * .05 + i / 7) % 1);
+      const px = x + (from.x - x) * t;
+      const py = y + (from.y - y) * t + Math.sin(tick * .22 + i) * 5;
+      ctx.globalAlpha = power * (1 - .35 * t);
+      ctx.fillStyle = '#cbfaff'; ctx.fillRect(Math.round(px),Math.round(py),3,3);
+    }
+    ctx.restore();
+  }
+
   function blueBack(ctx, f, tick) {
     const {x, y} = bluePosition(f), amount = blueStrength(f);
     const pulse = Math.sin(tick * 0.21) * 4, radius = 78 + pulse;
@@ -269,8 +302,8 @@
     ctx.restore();
   }
 
-  function drawBehind(ctx, f, tick) {
-    if (f.name === 'Gojo' && f.blue > 0) blueBack(ctx, f, tick);
+  function drawBehind(ctx, f, tick, opponent) {
+    if (f.name === 'Gojo' && f.blue > 0) { blueBack(ctx, f, tick); blueTether(ctx, f, opponent, tick); }
     if (f.name === 'Toji') dashBack(ctx, f, tick);
   }
   function drawFront(ctx, f, tick) {
