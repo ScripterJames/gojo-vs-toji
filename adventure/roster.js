@@ -3,7 +3,7 @@
    No chance-based wagering: Hakari's "Jackpot" is a timed power-up on a cooldown. */
 (() => {
   'use strict';
-  const ROSTER=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami'];
+  const ROSTER=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo'];
   const NAMES={
     Gojo:'Blue · five-second nonlethal vortex',
     Toji:'Heavenly Restriction · evasive striking dash',
@@ -15,7 +15,10 @@
     Maki:'Weapon Sweep · long-reach staff counter',
     Toge:'Cursed Speech · short-range stunning shout',
     Panda:'Guard Stomp · defensive shield and ground impact',
-    Nanami:'Ratio Strike · precise delayed 7:3 weak-point cut'
+    Nanami:'Ratio Strike · precise delayed 7:3 weak-point cut',
+    Yuta:'Rika Guard · reactive counter and recovery',
+    Choso:'Piercing Blood · delayed narrow long-range beam',
+    Todo:'Boogie Woogie · tactical position swap and stun'
   };
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   function init(f) {
@@ -27,6 +30,9 @@
     f.speech=0;f.speechDir=f.face;
     f.stomp=0;f.stompHit=false;
     f.ratio=0;f.ratioDir=f.face;
+    f.rika=0;f.rikaTriggered=false;f.rikaLastHp=f.hp;
+    f.pierce=0;f.pierceDir=f.face;f.pierceHit=false;
+    f.boogie=0;f.boogieDone=false;
     return f;
   }
   function onCast(f,other) {
@@ -56,6 +62,15 @@
         f.newSpecialFlash=30;f.specialCool=420;return true;
       case 'Nanami':
         f.ratio=28;f.ratioDir=f.face;f.newSpecialFlash=28;f.specialCool=360;return true;
+      case 'Yuta':
+        f.rika=360;f.rikaTriggered=false;f.rikaLastHp=f.hp;
+        f.newSpecialFlash=28;f.specialCool=540;return true;
+      case 'Choso':
+        f.pierce=24;f.pierceDir=f.face;f.pierceHit=false;
+        f.newSpecialFlash=24;f.specialCool=390;return true;
+      case 'Todo':
+        f.boogie=18;f.boogieDone=false;
+        f.newSpecialFlash=18;f.specialCool=390;return true;
       default: return false;
     }
   }
@@ -77,7 +92,7 @@
   }
   function tick(f,other) {
     if(f.newSpecialFlash>0)f.newSpecialFlash--;
-    if(f.hp<=0){f.jackpot=0;f.cleave=0;f.pet=0;f.blackFlash=0;f.nail=null;f.resonance=0;f.sweep=0;f.speech=0;f.stomp=0;f.ratio=0;return;}
+    if(f.hp<=0){f.jackpot=0;f.cleave=0;f.pet=0;f.blackFlash=0;f.nail=null;f.resonance=0;f.sweep=0;f.speech=0;f.stomp=0;f.ratio=0;f.rika=0;f.pierce=0;f.boogie=0;return;}
     if(f.jackpot>0) {
       f.jackpot--;f.jackpotAge++;
       if(f.jackpotAge%60===0)f.hp=Math.min(f.maxHp||100,f.hp+1+(f.specialPower||0));
@@ -166,8 +181,55 @@
         }
       }
     }
+    // Yuta's Rika Guard: one reactive counter when hit, rather than a passive attacker.
+    if(f.rika>0){
+      f.rika--;
+      if(!f.rikaTriggered && f.hp<f.rikaLastHp){
+        f.rikaTriggered=true;
+        f.hp=Math.min(f.maxHp||100,f.hp+5+2*(f.specialPower||0));
+        if(Math.abs((other.x+other.w/2)-(f.x+f.w/2))<=285 &&
+           Math.abs(other.y-f.y)<115){
+          impact(f,other,22+4*(f.specialPower||0),'#c0bbff',11);
+        }
+      }
+      f.rikaLastHp=f.hp;
+    }
+    // Piercing Blood: narrow beam after a 15-frame warning. Jumping can dodge it.
+    if(f.pierce>0){
+      f.pierce--;
+      if(f.pierce===9 && !f.pierceHit){
+        const dx=f.pierceDir*((other.x+other.w/2)-(f.x+f.w/2));
+        const dy=Math.abs((other.y+other.h*.47)-(f.y+f.h*.47));
+        if(dx>=0 && dx<=555 && dy<=43 &&
+           impact(f,other,20+4*(f.specialPower||0),'#f26382',9)){
+          f.pierceHit=true;
+        }
+      }
+    }
+    // Boogie Woogie swaps positions and briefly stuns but causes no damage itself.
+    if(f.boogie>0){
+      f.boogie--;
+      if(f.boogie===10 && !f.boogieDone){
+        f.boogieDone=true;
+        if(other.hp>0 && Math.abs(other.x-f.x)<=345 && Math.abs(other.y-f.y)<95){
+          const oldX=f.x;f.x=clamp(other.x,20,886);other.x=clamp(oldX,20,886);
+          f.face=other.x>f.x?1:-1;other.face=f.x>other.x?1:-1;
+          f.invul=Math.max(f.invul,10+2*(f.specialPower||0));
+          if(other.invul<=0){
+            other.hitstun=Math.max(other.hitstun||0,12+3*(f.specialPower||0));
+            other.hitDirection=other.x>f.x?1:-1;
+            other.flash=Math.max(other.flash,8);
+          }
+        }
+      }
+    }
   }
   function behind(ctx,f,frame){
+    if(f.rika>0){
+      const x=f.x+f.w/2-39*f.face,y=f.y+60;
+      ctx.save();ctx.globalAlpha=.15+.14*Math.sin(frame*.18)**2;
+      ctx.fillStyle='#b7b4e9';ctx.beginPath();ctx.ellipse(x,y,38,66,0,0,Math.PI*2);ctx.fill();ctx.restore();
+    }
     if(f.jackpot>0){
       const x=f.x+f.w/2,y=f.y+51;
       ctx.save();ctx.lineWidth=4;ctx.strokeStyle='#f7ce65';
@@ -262,6 +324,37 @@
       ctx.moveTo(x-dir*20,y+20);ctx.lineTo(x+dir*Math.cos(angle)*205,y+Math.sin(angle)*83);ctx.stroke();
       ctx.restore();
     }
+    if(f.rika>0){
+      const x=Math.round(f.x+f.w/2-f.face*64),y=Math.round(f.y+18),breath=frame%20<10?0:2;
+      ctx.save();ctx.globalAlpha=.82;
+      ctx.fillStyle='#24283f';ctx.fillRect(x-24,y+16+breath,48,76);
+      ctx.fillStyle='#d2d0f0';ctx.fillRect(x-20,y+10+breath,40,64);
+      ctx.fillStyle='#eef0ff';ctx.fillRect(x-15,y+6+breath,30,19);
+      ctx.fillStyle='#45436f';ctx.fillRect(x-10,y+16+breath,6,4);ctx.fillRect(x+5,y+16+breath,6,4);
+      ctx.fillStyle='#c6b5e6';ctx.fillRect(x-28,y+42+breath,12,37);ctx.fillRect(x+16,y+42+breath,12,37);
+      if(f.rikaTriggered){ctx.strokeStyle='#f2eaff';ctx.lineWidth=3;ctx.strokeRect(x-33,y+1+breath,66,94);}
+      ctx.restore();
+    }
+    if(f.pierce>0){
+      const x=f.x+f.w/2+f.pierceDir*24,y=f.y+f.h*.47;
+      ctx.save();ctx.strokeStyle='#df4e70';ctx.lineCap='square';
+      if(f.pierce>9){ctx.globalAlpha=.75;ctx.lineWidth=3;
+        ctx.beginPath();ctx.moveTo(x,y-18);ctx.lineTo(x+f.pierceDir*28,y-18);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(x,y+18);ctx.lineTo(x+f.pierceDir*28,y+18);ctx.stroke();
+      }else{
+        ctx.globalAlpha=.8*(f.pierce/9);ctx.lineWidth=9;
+        ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+f.pierceDir*545,y);ctx.stroke();
+        ctx.strokeStyle='#ffc5cc';ctx.lineWidth=3;ctx.beginPath();
+        ctx.moveTo(x,y);ctx.lineTo(x+f.pierceDir*545,y);ctx.stroke();
+      }ctx.restore();
+    }
+    if(f.boogie>0){
+      const x=f.x+f.w/2,y=f.y+43,age=18-f.boogie;
+      ctx.save();ctx.strokeStyle='#d3a5ff';ctx.lineWidth=3;
+      ctx.globalAlpha=Math.max(.15,1-age/21);
+      for(let j=0;j<3;j++){ctx.beginPath();ctx.ellipse(x,y,12+age*4+j*14,17+age*2+j*8,0,0,Math.PI*2);ctx.stroke();}
+      ctx.restore();
+    }
     if(f.jackpot>0){
       ctx.save();ctx.fillStyle='#ffe58f';ctx.textAlign='center';ctx.font='bold 15px monospace';
       ctx.fillText('JACKPOT '+(f.jackpot/60).toFixed(1)+'s',f.x+f.w/2,f.y-21);ctx.restore();
@@ -278,6 +371,9 @@
     if(f.speech>0)return 'CURSED SPEECH';
     if(f.stomp>0)return f.invul>0?'PANDA GUARD':'PANDA STOMP';
     if(f.ratio>0)return 'RATIO 7:3';
+    if(f.rika>0)return f.rikaTriggered?'RIKA COUNTERED':'RIKA GUARD '+(f.rika/60).toFixed(1)+'s';
+    if(f.pierce>0)return f.pierce>9?'PIERCING BLOOD CHARGE':'PIERCING BLOOD';
+    if(f.boogie>0)return 'BOOGIE WOOGIE';
     return f.specialCool?'SPECIAL '+Math.ceil(f.specialCool/60)+'s':'SPECIAL READY';
   }
   window.HakoneRoster={roster:ROSTER,descriptions:NAMES,init,onCast,melee,tick,behind,front,status};
