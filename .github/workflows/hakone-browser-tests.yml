@@ -7,6 +7,7 @@ on:
       - "adventure/**"
       - "tests/test_hakone.py"
       - "tests/test_hakone_arena.py"
+      - "tests/test_hakone_origin.py"
       - ".github/workflows/hakone-browser-tests.yml"
   workflow_dispatch:
 
@@ -32,3 +33,5 @@ jobs:
         run: python tests/test_hakone.py
       - name: Test Hakone Arena combat
         run: python tests/test_hakone_arena.py
+      - name: Test real-origin Hakone integration
+        run: python tests/test_hakone_origin.py
