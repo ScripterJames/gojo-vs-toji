@@ -97,7 +97,7 @@ with sync_playwright() as p:
     page.locator('#fighterButton').click()
     page.get_by_role('button',name='Hakari · Jackpot',exact=True).click()
     check('New fighter selection persists in town',snap()['fighter']=='Hakari')
-    for name,ability in [('Yuji','Black Flash'),('Nobara','Nail + Resonance'),('Maki','Weapon Sweep'),('Toge','Cursed Speech'),('Panda','Guard Stomp'),('Nanami','Ratio Strike')]:
+    for name,ability in [('Yuji','Black Flash'),('Nobara','Nail + Resonance'),('Maki','Weapon Sweep'),('Toge','Cursed Speech'),('Panda','Guard Stomp'),('Nanami','Ratio Strike'),('Yuta','Rika Guard'),('Choso','Piercing Blood'),('Todo','Boogie Woogie')]:
         page.locator('#fighterButton').click()
         page.get_by_role('button',name=name+' · '+ability,exact=True).click()
         check('Town selects '+name,snap()['fighter']==name)
