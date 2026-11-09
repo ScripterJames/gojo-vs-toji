@@ -20,7 +20,7 @@
     dash:     { first: 30, count: 4, step: 4, loop: true }
   };
   const sheets = {};
-  for (const name of ['Gojo', 'Toji']) {
+  for (const name of ['Gojo', 'Toji', 'Hakari', 'Sukuna', 'Megumi']) {
     const image = new Image();
     sheets[name] = { image, loaded: false, failed: false };
     image.onload = () => {
@@ -51,6 +51,12 @@
       state = 'hurt'; elapsed = 8 - Math.min(8, f.flash);
     } else if (f.blue > 0 && f.name === 'Gojo') {
       state = 'special'; elapsed = 300 - f.blue;
+    } else if (f.name === 'Hakari' && f.specialFlash > 0) {
+      state = 'special'; elapsed = 28 - f.specialFlash;
+    } else if (f.name === 'Sukuna' && f.cleaveTimer > 0) {
+      state = 'special'; elapsed = 39 - f.cleaveTimer;
+    } else if (f.name === 'Megumi' && f.specialFlash > 0) {
+      state = 'special'; elapsed = 16 - f.specialFlash;
     } else if (f.y < floor - f.h - 1) state = f.vy < 0 ? 'jump' : 'fall';
     else if (Math.abs(f.vx) > 0.9) state = 'walk';
     else state = 'idle';

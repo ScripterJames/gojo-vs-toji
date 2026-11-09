@@ -96,6 +96,21 @@
         rush(0.115, 0.39, 850, 150, pan);
         tone('sine', 130, 49, 0.16, 0.34, pan);
         break;
+      case 'jackpot':
+        tone('triangle',280,760,.45,.19,pan);
+        tone('sine',420,1100,.43,.17,pan,.1);
+        tone('triangle',620,1390,.30,.15,pan,.22);
+        break;
+      case 'cleave':
+        rush(.32,.34,4300,450,pan);
+        tone('sawtooth',760,115,.19,.2,pan);
+        rush(.17,.22,3600,550,pan,.21);
+        break;
+      case 'summon':
+        tone('sine',160,80,.4,.29,pan);
+        tone('triangle',270,490,.48,.13,pan,.1);
+        rush(.22,.18,1300,260,pan,.12);
+        break;
       case 'start':
         tone('triangle', 430, 670, 0.12, 0.08, 0);
         tone('triangle', 520, 880, 0.16, 0.10, 0, 0.08);
