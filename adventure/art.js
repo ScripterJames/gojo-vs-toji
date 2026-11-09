@@ -55,7 +55,7 @@ window.HakoneArt = (() => {
   function sprite(name,dir,phase){
     const key=name+dir+phase;if(cache.has(key))return cache.get(key);
     const cv=document.createElement('canvas');cv.width=28;cv.height=38;const c=cv.getContext('2d');
-    const gojo=name==='Gojo',npc=!['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami'].includes(name),skin='#dcac83';
+    const gojo=name==='Gojo',npc=!['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami'].includes(name),skin=name==='Panda'?'#f2ece2':'#dcac83';
     const palette={
       Gojo:['#e7ebdf','#384253','#b4b6c0'],
       Toji:['#242e3a','#3b504e','#7c7482'],
