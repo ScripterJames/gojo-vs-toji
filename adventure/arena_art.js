@@ -7,7 +7,10 @@
   const catalog={
     Hakari:{hair:'#ead7a0',hairShadow:'#bba36d',skin:'#c69073',shirt:'#456b5d',light:'#689879',pants:'#554c6b',shoe:'#2a2f3c',accent:'#f0c95d',ink:'#1d2730'},
     Sukuna:{hair:'#e4a0aa',hairShadow:'#b35d79',skin:'#d9a089',shirt:'#71465f',light:'#a46a77',pants:'#2c303f',shoe:'#171e28',accent:'#ef597f',ink:'#29212e'},
-    Megumi:{hair:'#1e2b40',hairShadow:'#35465c',skin:'#d9ab90',shirt:'#26344d',light:'#45617c',pants:'#252e44',shoe:'#1c2132',accent:'#aebeff',ink:'#182034'}
+    Megumi:{hair:'#1e2b40',hairShadow:'#35465c',skin:'#d9ab90',shirt:'#26344d',light:'#45617c',pants:'#252e44',shoe:'#1c2132',accent:'#aebeff',ink:'#182034'},
+    Yuji:{hair:'#d78b9d',hairShadow:'#a65b78',skin:'#dfab93',shirt:'#7b364a',light:'#bd5266',pants:'#263448',shoe:'#172332',accent:'#8d9bff',ink:'#262438'},
+    Nobara:{hair:'#b86e3c',hairShadow:'#7b492e',skin:'#e5b493',shirt:'#2e435c',light:'#54677a',pants:'#282f43',shoe:'#181e2c',accent:'#d7a46a',ink:'#202738'},
+    Maki:{hair:'#1f3540',hairShadow:'#132632',skin:'#d6ab89',shirt:'#456450',light:'#78907a',pants:'#33463d',shoe:'#1d2a2d',accent:'#b6c6a7',ink:'#17282b'}
   };
   const cache=new Map(),SIZE=64,HEIGHT=50,SCALE=3,ORIGIN_X=18,GROUND=450;
   const clips={
@@ -20,7 +23,7 @@
     if(f.hp<=0){key='defeated';elapsed=0;}
     else if(f.attack>0&&['punch','kick'].includes(f.attackKind)){
       key=f.attackKind;elapsed=(key==='punch'?12:18)-f.attack;
-    }else if(f.jackpot>0||f.cleave>0||f.newSpecialFlash>0){key='special';elapsed=tick;}
+    }else if(f.jackpot>0||f.cleave>0||f.pet>0||f.blackFlash>0||f.nail||f.resonance>0||f.sweep>0||f.newSpecialFlash>0){key='special';elapsed=tick;}
     else if(f.flash>0&&f.invul===0){key='hurt';elapsed=Math.max(0,8-f.flash);}
     else if(f.y<GROUND-f.h-2){key='jump';elapsed=0;}
     else if(Math.abs(f.vx)>1){key='walk';elapsed=tick;}
@@ -65,6 +68,9 @@
     if(name==='Hakari'){block(10,20+bob,17,3,p.light);block(16,22+bob,2,11,'#d0d0a0');}
     if(name==='Sukuna'){block(10,21+bob,15,2,'#4f3548');block(22,29+bob,4,3,p.accent);}
     if(name==='Megumi'){block(16,18+bob,3,14,'#18273e');block(16,22+bob,2,3,'#b6c5e0');}
+    if(name==='Yuji'){block(10,20+bob,16,4,'#aa4457');block(12,22+bob,3,9,'#e16b78');}
+    if(name==='Nobara'){block(10,31+bob,17,7,'#25334b');block(12,35+bob,4,4,'#465a70');block(21,35+bob,4,4,'#465a70');}
+    if(name==='Maki'){block(12,21+bob,11,3,'#718970');block(14,24+bob,4,8,'#b1c8a7');}
     // Head and hair: no smooth vector curves or arbitrary subpixels.
     block(13,8+bob,14,13,p.ink);block(14,9+bob,12,12,p.skin);
     block(13,7+bob,14,6,p.hair);block(12,10+bob,3,7,p.hairShadow);
@@ -74,6 +80,19 @@
       for(const [xx,yy] of [[12,6],[16,3],[21,4],[25,2],[28,7]])block(xx,yy+bob,4,7,p.hair);
       block(17,13+bob,2,3,p.ink);block(23,13+bob,2,3,p.ink);
       block(15,18+bob,3,1,p.accent);block(25,17+bob,2,2,p.accent);
+    }else if(name==='Yuji'){
+      for(const [xx,yy] of [[11,5],[14,2],[19,3],[24,1],[28,6]])block(xx,yy+bob,5,8,p.hair);
+      block(12,11+bob,4,5,p.hairShadow);
+    }else if(name==='Nobara'){
+      block(10,7+bob,19,16,p.hair);block(12,9+bob,16,8,p.skin);
+      block(12,4+bob,17,7,p.hair);
+      block(10,15+bob,5,10,p.hairShadow);block(25,14+bob,5,10,p.hair);
+      block(14,7+bob,15,2,p.hairShadow);
+    }else if(name==='Maki'){
+      block(12,6+bob,17,7,p.hair);block(26,2+bob,7,7,p.hair);
+      block(29,5+bob,7,7,p.hairShadow);block(10,12+bob,5,13,p.hair);
+      block(14,14+bob,13,2,'#4f6b61');block(14,17+bob,13,2,'#344c4d');
+      block(19,14+bob,2,4,p.ink);block(14,14+bob,5,3,p.ink);block(22,14+bob,5,3,p.ink);
     }else{
       block(11,6+bob,16,5,p.hair);block(24,8+bob,5,5,p.hairShadow);
       block(12,4+bob,9,5,p.hair);block(22,5+bob,6,4,p.hair);
@@ -92,6 +111,9 @@
     block(fistX-1,fistY-2+bob,5,4,p.skin);
     if(key==='special'){
       block(29,13+bob,4,3,p.accent);block(32,10+bob,3,3,'#e8f2ff');
+      if(name==='Nobara'){block(37,19+bob,3,18,'#a6aab3');block(36,15+bob,6,4,'#d6b079');}
+      if(name==='Maki'){block(30,8+bob,3,31,'#cad0c0');block(30,4+bob,5,6,'#718879');}
+      if(name==='Yuji'){block(36,16+bob,7,4,'#6175e3');block(40,12+bob,4,4,'#afc4ff');}
     }
     if(key==='hurt')block(12,21,4,8,'#e6d8d5');
     cache.set(cacheKey,c);return c;
