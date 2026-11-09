@@ -3,7 +3,7 @@
    No chance-based wagering: Hakari's "Jackpot" is a timed power-up on a cooldown. */
 (() => {
   'use strict';
-  const ROSTER=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo'];
+  const ROSTER=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo','Jogo','Mahito'];
   const NAMES={
     Gojo:'Blue · five-second nonlethal vortex',
     Toji:'Heavenly Restriction · evasive striking dash',
@@ -18,7 +18,9 @@
     Nanami:'Ratio Strike · precise delayed 7:3 weak-point cut',
     Yuta:'Rika Guard · reactive counter and recovery',
     Choso:'Piercing Blood · delayed narrow long-range beam',
-    Todo:'Boogie Woogie · tactical position swap and stun'
+    Todo:'Boogie Woogie · tactical position swap and stun',
+    Jogo:'Volcanic Eruption · delayed targeted blast',
+    Mahito:'Idle Transfiguration · close touch and temporary slow'
   };
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   function init(f) {
@@ -33,6 +35,8 @@
     f.rika=0;f.rikaTriggered=false;f.rikaLastHp=f.hp;
     f.pierce=0;f.pierceDir=f.face;f.pierceHit=false;
     f.boogie=0;f.boogieDone=false;
+    f.ember=0;f.emberX=0;f.emberY=0;f.emberHit=false;
+    f.transfigure=0;f.transfigureDir=f.face;f.transfigSlow=0;
     return f;
   }
   function onCast(f,other) {
@@ -71,6 +75,17 @@
       case 'Todo':
         f.boogie=18;f.boogieDone=false;
         f.newSpecialFlash=18;f.specialCool=390;return true;
+      case 'Jogo': {
+        // The warning stays where the opponent stood when cast. Moving or jumping avoids it.
+        const inRange=Math.abs(other.x-f.x)<=455;
+        f.emberX=inRange?other.x+other.w/2:f.x+f.w/2+f.face*315;
+        f.emberY=inRange?other.y+other.h/2:f.y+f.h/2;
+        f.ember=36;f.emberHit=false;
+        f.newSpecialFlash=21;f.specialCool=390;return true;
+      }
+      case 'Mahito':
+        f.transfigure=23;f.transfigureDir=f.face;
+        f.newSpecialFlash=23;f.specialCool=360;return true;
       default: return false;
     }
   }
@@ -92,7 +107,8 @@
   }
   function tick(f,other) {
     if(f.newSpecialFlash>0)f.newSpecialFlash--;
-    if(f.hp<=0){f.jackpot=0;f.cleave=0;f.pet=0;f.blackFlash=0;f.nail=null;f.resonance=0;f.sweep=0;f.speech=0;f.stomp=0;f.ratio=0;f.rika=0;f.pierce=0;f.boogie=0;return;}
+    if(f.transfigSlow>0)f.transfigSlow--;
+    if(f.hp<=0){f.jackpot=0;f.cleave=0;f.pet=0;f.blackFlash=0;f.nail=null;f.resonance=0;f.sweep=0;f.speech=0;f.stomp=0;f.ratio=0;f.rika=0;f.pierce=0;f.boogie=0;f.ember=0;f.transfigure=0;f.transfigSlow=0;return;}
     if(f.jackpot>0) {
       f.jackpot--;f.jackpotAge++;
       if(f.jackpotAge%60===0)f.hp=Math.min(f.maxHp||100,f.hp+1+(f.specialPower||0));
@@ -220,6 +236,28 @@
             other.hitDirection=other.x>f.x?1:-1;
             other.flash=Math.max(other.flash,8);
           }
+        }
+      }
+    }
+    // Jogo: an explicitly telegraphed ground mark, with exactly one possible eruption.
+    if(f.ember>0){
+      f.ember--;
+      if(f.ember===14 && !f.emberHit){
+        const dx=Math.abs((other.x+other.w/2)-f.emberX);
+        const dy=Math.abs((other.y+other.h/2)-f.emberY);
+        if(dx<=77 && dy<=98){
+          f.emberHit=impact(f,other,22+5*(f.specialPower||0),'#ff963d',11);
+        }
+      }
+    }
+    // Mahito: short-range, one-time touch; slow only on a real hit.
+    if(f.transfigure>0){
+      f.transfigure--;
+      if(f.transfigure===12){
+        const dx=f.transfigureDir*((other.x+other.w/2)-(f.x+f.w/2));
+        if(dx>=-17 && dx<=128 && Math.abs(other.y-f.y)<89 &&
+           impact(f,other,16+4*(f.specialPower||0),'#a0b7ed',9)){
+          other.transfigSlow=Math.max(other.transfigSlow||0,150+30*(f.specialPower||0));
         }
       }
     }
@@ -355,6 +393,39 @@
       for(let j=0;j<3;j++){ctx.beginPath();ctx.ellipse(x,y,12+age*4+j*14,17+age*2+j*8,0,0,Math.PI*2);ctx.stroke();}
       ctx.restore();
     }
+    if(f.ember>0){
+      const x=Math.round(f.emberX),y=Math.round(f.emberY),age=36-f.ember;
+      ctx.save();ctx.lineWidth=3;ctx.lineCap='square';
+      if(f.ember>14){
+        // Fixed warning telegraph; no tracking once cast.
+        ctx.strokeStyle='#ffae54';ctx.globalAlpha=.55+.32*(age%8<4?1:0);
+        ctx.beginPath();ctx.ellipse(x,y+43,74,12,0,0,Math.PI*2);ctx.stroke();
+        ctx.fillStyle='#ffc277';ctx.fillRect(x-5,y+36,10,5);
+        for(let i=-2;i<=2;i++)ctx.fillRect(x+i*29,y+38,5,2);
+      }else{
+        ctx.globalAlpha=Math.max(.15,f.ember/14);
+        for(let i=0;i<7;i++){
+          const offset=(i-3)*20;
+          ctx.fillStyle=i%2?'#ff7336':'#ffe29e';
+          const rise=(14-f.ember)*5+(i%3)*13;
+          ctx.fillRect(x+offset-7,y+45-rise,14,24+(i%2)*15);
+        }
+      }
+      ctx.restore();
+    }
+    if(f.transfigure>0){
+      const age=23-f.transfigure,x=f.x+f.w/2+f.transfigureDir*(35+age*2),y=f.y+42;
+      ctx.save();ctx.strokeStyle='#a5bfed';ctx.lineWidth=3;
+      ctx.globalAlpha=Math.max(.15,1-age/26);
+      for(let i=0;i<3;i++){ctx.beginPath();ctx.ellipse(x,y,13+i*9,14+i*8,0,0,Math.PI*2);ctx.stroke();}
+      ctx.restore();
+    }
+    if(f.transfigSlow>0){
+      const x=f.x+f.w/2;
+      ctx.save();ctx.strokeStyle='#91a9ed';ctx.lineWidth=3;
+      ctx.globalAlpha=.2+.14*Math.sin(frame*.2)**2;
+      ctx.strokeRect(Math.round(x-28),Math.round(f.y+12),56,92);ctx.restore();
+    }
     if(f.jackpot>0){
       ctx.save();ctx.fillStyle='#ffe58f';ctx.textAlign='center';ctx.font='bold 15px monospace';
       ctx.fillText('JACKPOT '+(f.jackpot/60).toFixed(1)+'s',f.x+f.w/2,f.y-21);ctx.restore();
@@ -374,6 +445,9 @@
     if(f.rika>0)return f.rikaTriggered?'RIKA COUNTERED':'RIKA GUARD '+(f.rika/60).toFixed(1)+'s';
     if(f.pierce>0)return f.pierce>9?'PIERCING BLOOD CHARGE':'PIERCING BLOOD';
     if(f.boogie>0)return 'BOOGIE WOOGIE';
+    if(f.ember>0)return f.ember>14?'ERUPTION WARNING':'VOLCANIC ERUPTION';
+    if(f.transfigure>0)return 'TRANSFIGURATION TOUCH';
+    if(f.transfigSlow>0)return 'TRANSFIGURED '+(f.transfigSlow/60).toFixed(1)+'s';
     return f.specialCool?'SPECIAL '+Math.ceil(f.specialCool/60)+'s':'SPECIAL READY';
   }
   window.HakoneRoster={roster:ROSTER,descriptions:NAMES,init,onCast,melee,tick,behind,front,status};
