@@ -144,3 +144,24 @@ GitHub Actions [Hakone browser regression run 42598175333](https://github.com/Sc
 - Both browser suites load checked-out HTML and JS via page.set_content with explicit in-memory localStorage test doubles and manually advanced arena frames. They do not prove live hosted-origin persistence, network loading, the live iframe Escape/audio shutdown path, or downloads of original Gojo/Toji PNG atlases. Those remain next priority.
 - Earlier run 42597990938 failed before tests due unsupported Ubuntu 26.04. Workflow fixed to ubuntu-24.04 and subsequent CI above passed.
 
+
+
+## Session 4: November 9, 2026, around 03:03 PST — three more playable fighters
+
+### Implemented on the expansion branch
+- Expanded Hakone Arena and town selection from 11 to **14 fighters** with Yuta, Choso and Todo. Both arena selectors, town traveler picker, dojo, and town-to-arena fighter handoff use the expanded roster. Existing /index.html and /preview/ remain untouched. Shared save keys, prices (35/70/105), starter gift (50 once), and victory coins (35) are unchanged.
+- **Yuta: Rika Guard.** Six-second counter window. When hit, Yuta recovers 5 HP and a nearby Rika apparition retaliates once for 22 HP. Rika cannot attack across the map or repeat the counter; the Special upgrade increases restoration and counter damage. This defensive style intentionally differs from Megumi's repeated dog hits.
+- **Choso: Piercing Blood.** A 15-frame windup gives opponents time to jump or get out of the narrow vertical beam (555px maximum reach). A connection deals 20 HP once; special ranks boost damage.
+- **Todo: Boogie Woogie.** A delayed clap swaps the two fighters when they are nearby, briefly stuns the opponent and grants evasion to Todo. Out-of-range casts miss; the swap itself deals zero HP damage. Special ranks lengthen the stun and protection.
+- Built original palette-distinct cached 64×50 arena frames and 28×38 traveler frames for all three, with readable hair, outfit, special poses and grounded hit effects. Existing cached strike architecture remains in place. Original Gojo/Toji image atlases are still used.
+- Updated actual Chromium test scripts for 14 names, selection, new ability timing, counter-once behavior, dodging and canvas rendering. No purchases or copied proprietary sprites.
+
+### Verified in this run
+- **10 executable direct V8 checks** passed on the modified roster (including 14 names; one-time counter, bounded range, long-range narrow shot and jump miss, Todo swap/no damage, and Special scaling). Canvas drawing and caching paths for the three new fighters passed **15 additional smoke-render calls** with deliberately mocked canvas methods. This is not a real hosted-browser visual inspection.
+- The GitHub Actions Chromium workflow was triggered on the branch; runs from intermediate partial commits can fail because the expanded 14-character roster was not integrated into tests until the final source commit. Check the run for the final integration SHA before reporting Chromium success.
+- Research: ORICON profiles for [Todo's Boogie Woogie](https://oricon-group.com/news/3331/) and [Choso's Piercing Blood](https://us.oricon-group.com/news/2923/); SLYNYRD [Pixelblog 56](https://www.slynyrd.com/blog/2025/5/23/pixelblog-56-top-down-character-attack-animation) for windup, controlled smear, follow-through and recovery timing. Character moves, values and art are original gameplay adaptations, not exact canonical abilities/assets.
+
+### Remaining issues / next work
+1. Check the **final** branch Chromium regression results, inspect any failures and fix before moving the branch to main. After that, verify Pages deployment; a passing local source test alone is not live deployment.
+2. Investigate actual hosted-origin storage and embedded arena exit/return flow in a real browser. Previous Chromium tests use page.set_content with a declared in-memory localStorage substitute, not real origin persistence or live iframe navigation.
+3. Finish the two remaining aspirational roster members, Jogo and Mahito, in the next bounded increment if tests permit; polish Hakone shop interiors, vending/7-Eleven machines, and character silhouette distinctions.
