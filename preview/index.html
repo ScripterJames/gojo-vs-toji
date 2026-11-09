@@ -89,7 +89,7 @@ if((f.blue>0||blueActiveMs>0)&&other.invul===0&&other.hp>0){
   if(f.blue>0){other.x+=Math.sign(delta)*Math.min(7,Math.abs(delta));other.vy-=.22;}
   f.blueExposureMs+=blueActiveMs;
   if(f.blueExposureMs>=BLUE_DRAIN_INTERVAL_MS){
-   const ticks=Math.floor(f.blueExposureMs/BLUE_DRAIN_INTERVAL_MS);
+   const ticks=Math.floor((f.blueExposureMs+0.001)/BLUE_DRAIN_INTERVAL_MS);
    f.blueExposureMs%=BLUE_DRAIN_INTERVAL_MS;
    let damage=0;
    for(let i=0;i<ticks;i++){
