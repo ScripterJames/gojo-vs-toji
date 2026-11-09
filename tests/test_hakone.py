@@ -19,7 +19,7 @@ A=ROOT/'adventure'
 OUT=Path(tempfile.mkdtemp(prefix='hakone-test-'))
 base=(A/'index.html').read_text()
 for name in ['data','art','town']:
-    base=re.sub(rf'<script src="{name}\\.js\\?v=[^"]+"></script>',lambda _:'<script>'+(A/f'{name}.js').read_text()+'</script>',base)
+    base=re.sub(rf'<script src="{name}\.js\?v=[^"]+"></script>',lambda _:'<script>'+(A/f'{name}.js').read_text()+'</script>',base)
 COINS='gojo-vs-toji-arcade-coins-v1'
 LEVELS='gojo-vs-toji-upgrade-levels-v1'
 results=[]
