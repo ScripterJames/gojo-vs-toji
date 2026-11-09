@@ -2,6 +2,7 @@
 (() => {
   'use strict';
   const D=HakoneData,A=HakoneArt,$=id=>document.getElementById(id);
+  const roster=['Gojo','Toji','Hakari','Sukuna','Megumi'];
   const canvas=$('world'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const SAVE='hakone-life-town-v1',COINS='gojo-vs-toji-arcade-coins-v1',LEVELS='gojo-vs-toji-upgrade-levels-v1',GIFT='gojo-vs-toji-upgrade-starter-v1';
   const memoryStore={};
@@ -12,7 +13,7 @@
   let saved={};try{saved=JSON.parse(read(SAVE)||'{}')||{}}catch(_){}
   const state={x:clamp(num(saved.x,200),20,1260),y:clamp(num(saved.y,270),55,780),room:D.shops[saved.room]?saved.room:null,
     returnPoint:saved.returnPoint&&Number.isFinite(saved.returnPoint.x)&&Number.isFinite(saved.returnPoint.y)?saved.returnPoint:{x:200,y:270},
-    fighter:['Gojo','Toji'].includes(saved.fighter)?saved.fighter:'Gojo',dir:'down',step:0,
+    fighter:roster.includes(saved.fighter)?saved.fighter:'Gojo',dir:'down',step:0,
     energy:clamp(num(saved.energy,85),0,100),fullness:clamp(num(saved.fullness,80),0,100),bag:{},
     trash:clamp(Math.floor(num(saved.trash)),0,999),stash:clamp(Math.floor(num(saved.stash)),0,999999),
     stamps:Array.isArray(saved.stamps)?[...new Set(saved.stamps.filter(x=>D.shops[x]))]:[],
@@ -87,8 +88,8 @@
   }
   function upgrade(){
     let levels={};try{levels=JSON.parse(read(LEVELS)||'{}')||{}}catch(_){}
-    const name=state.fighter,rank=levels[name]||{},defs=[['power','Strength','Punch +2; kick +3 per level'],['vitality','Health','Maximum battle health +12 per level'],['agility','Speed','Battle movement speed +0.22 per level'],['technique','Special','Stronger Blue or Heavenly Restriction']];
-    panel(name+' · Upgrades','Three levels per upgrade. Shared with the existing arena. Prices: 35 / 70 / 105 coins. Purchases apply to your next fight.');
+    const name=state.fighter,rank=levels[name]||{},defs=[['power','Strength','Punch +2; kick +3 per level'],['vitality','Health','Maximum battle health +12 per level'],['agility','Speed','Battle movement speed +0.22 per level'],['technique','Special','Improves the selected fighter signature special']];
+    panel(name+' · Upgrades','Three levels per upgrade. Battle upgrades in Hakone Arena; coins are shared with the classic game. Prices: 35 / 70 / 105 coins. Purchases apply to your next fight.');
     for(const [id,label,desc] of defs){const level=clamp(Math.floor(num(rank[id])),0,3),price=35+level*35;
       const row=document.createElement('div');row.className='item';const words=document.createElement('div');words.className='grow';
       const title=document.createElement('strong'),detail=document.createElement('small');title.textContent=label+' '+('★'.repeat(level)+'☆'.repeat(3-level));detail.textContent=desc;words.append(title,detail);
@@ -96,7 +97,7 @@
       btn.onclick=()=>{if(!pay(price))return;levels[name]={...rank,[id]:level+1};write(LEVELS,JSON.stringify(levels));save();sound('purchase');notify(name+' upgraded. Start a new fight to use it.');upgrade();};row.append(words,btn);$('panelBody').append(row);
     }
   }
-  function selectFighter(){panel('Choose your traveler','The current published arena has Gojo and Toji. The expanded roster is being built separately.', ['Gojo','Toji'].map(name=>({label:name,run:()=>{state.fighter=name;save();close();}})));}
+  function selectFighter(){panel('Choose your traveler','Five playable fighters in Hakone Arena, each with a different special move. Your choice is saved for the next fight.',roster.map(name=>({label:name+(name==='Hakari'?' · Jackpot':name==='Sukuna'?' · Cleave':name==='Megumi'?' · Divine Dog':name==='Gojo'?' · Blue':' · Heavenly Restriction'),run:()=>{state.fighter=name;save();close();}})));}
   function interior(id){
     const o=(key,type,name,x,y,w=32,h=32,extra={})=>({id:key,type,name,x,y,w,h,solid:true,...extra});
     const all=[o('exit','exit','Return to town',296,438,48,14,{solid:false}),o('window','sign','Window view',296,44,32,16),o('seat','seat','Take a seat',380,322,38,18)];
@@ -199,7 +200,7 @@
   }
   function arena(){
     close();save();mode='arena';keys={};$('townView').hidden=true;$('arenaView').hidden=false;$('townTab').classList.remove('active');$('arenaTab').classList.add('active');
-    $('arenaFrame').src='../preview/?from=hakone';$('leaveFight').hidden=false;hud();
+    $('arenaFrame').src='arena.html?from=hakone&p1='+encodeURIComponent(state.fighter);$('leaveFight').hidden=false;hud();
   }
   function town(){
     mode='town';$('arenaFrame').src='about:blank';$('arenaView').hidden=true;$('townView').hidden=false;$('leaveFight').hidden=true;
