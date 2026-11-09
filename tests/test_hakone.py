@@ -52,7 +52,12 @@ with sync_playwright() as p:
         page.locator('.item').filter(has=page.locator('strong',has_text=label)).get_by_role('button',name='Buy',exact=True).click()
     check('Startup gift',snap()['coins']==50)
     x=snap()['x']
-    page.keyboard.down('ArrowRight');page.wait_for_timeout(250);page.keyboard.up('ArrowRight')
+    page.locator('#world').focus()
+    page.keyboard.down('ArrowRight')
+    try:
+        page.wait_for_function('(x) => HakoneLife.snapshot().x > x + 5',arg=x,timeout=10000)
+    finally:
+        page.keyboard.up('ArrowRight')
     check('Real keyboard movement',snap()['x']>x+5)
     interact('vending1');buy('Mineral water')
     check('Vending purchase',snap()['bag']['water']==1 and snap()['coins']==45)
