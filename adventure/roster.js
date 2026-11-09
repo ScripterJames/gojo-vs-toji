@@ -3,18 +3,24 @@
    No chance-based wagering: Hakari's "Jackpot" is a timed power-up on a cooldown. */
 (() => {
   'use strict';
-  const ROSTER=['Gojo','Toji','Hakari','Sukuna','Megumi'];
+  const ROSTER=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki'];
   const NAMES={
     Gojo:'Blue · five-second nonlethal vortex',
     Toji:'Heavenly Restriction · evasive striking dash',
     Hakari:'Jackpot · eight-second strength buff and small regeneration',
     Sukuna:'Cleave · three timed midrange slashes',
-    Megumi:'Divine Dog · eight-second companion attack'
+    Megumi:'Divine Dog · eight-second companion attack',
+    Yuji:'Black Flash · close-range lightning lunge',
+    Nobara:'Straw Doll · flying nail and delayed Resonance',
+    Maki:'Weapon Sweep · long-reach staff counter'
   };
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   function init(f) {
     f.jackpot=0;f.jackpotAge=0;f.cleave=0;f.pet=0;f.petX=f.x+f.w/2;f.petCooldown=0;
     f.newSpecialFlash=0;f.cleaveVictim=null;
+    f.blackFlash=0;f.blackFlashHit=false;f.blackFlashDir=f.face;
+    f.nail=null;f.resonance=0;f.resonanceTarget=null;
+    f.sweep=0;f.sweepHit=false;
     return f;
   }
   function onCast(f,other) {
@@ -28,6 +34,15 @@
       case 'Megumi':
         f.pet=480;f.petX=f.x+f.w/2+f.face*65;f.petCooldown=30;
         f.newSpecialFlash=24;f.specialCool=570;return true;
+      case 'Yuji':
+        f.blackFlash=19;f.blackFlashHit=false;f.blackFlashDir=f.face;
+        f.newSpecialFlash=19;f.specialCool=330;return true;
+      case 'Nobara':
+        f.nail={x:f.x+f.w/2+f.face*37,y:f.y+f.h*.41,vx:f.face*13,life:49};
+        f.resonance=0;f.resonanceTarget=null;
+        f.newSpecialFlash=16;f.specialCool=375;return true;
+      case 'Maki':
+        f.sweep=25;f.sweepHit=false;f.newSpecialFlash=18;f.specialCool=345;return true;
       default: return false;
     }
   }
@@ -49,7 +64,7 @@
   }
   function tick(f,other) {
     if(f.newSpecialFlash>0)f.newSpecialFlash--;
-    if(f.hp<=0){f.jackpot=0;f.cleave=0;f.pet=0;return;}
+    if(f.hp<=0){f.jackpot=0;f.cleave=0;f.pet=0;f.blackFlash=0;f.nail=null;f.resonance=0;f.sweep=0;return;}
     if(f.jackpot>0) {
       f.jackpot--;f.jackpotAge++;
       if(f.jackpotAge%60===0)f.hp=Math.min(f.maxHp||100,f.hp+1+(f.specialPower||0));
@@ -70,6 +85,44 @@
       f.petCooldown=Math.max(0,f.petCooldown-1);
       if(f.petCooldown===0 && Math.abs(f.petX-enemy)<80 && Math.abs(f.y-other.y)<110) {
         if(impact(f,other,5+2*(f.specialPower||0),'#b6b0ff',3))f.petCooldown=80;
+      }
+    }
+    if(f.blackFlash>0){
+      f.blackFlash--;
+      const dir=f.blackFlashDir||f.face;
+      f.x=clamp(f.x+dir*11,20,886);
+      const dx=dir*((other.x+other.w/2)-(f.x+f.w/2));
+      if(!f.blackFlashHit && dx>=-22 && dx<=77 &&
+         Math.abs((f.y+f.h*.5)-(other.y+other.h*.5))<92){
+        if(impact(f,other,20+5*(f.specialPower||0),'#668fff',12)){
+          f.blackFlashHit=true;
+          other.vy=Math.min(other.vy||0,-5);
+        }
+      }
+    }
+    if(f.nail){
+      const n=f.nail;n.x+=n.vx;n.life--;
+      if(n.life>0 && n.x>=other.x-8 && n.x<=other.x+other.w+8 &&
+         Math.abs(n.y-(other.y+other.h*.41))<77 &&
+         impact(f,other,9+2*(f.specialPower||0),'#f8b678',6)){
+        f.resonance=28;f.resonanceTarget=other;f.nail=null;
+      }else if(n.life<=0 || n.x<0 || n.x>960)f.nail=null;
+    }
+    if(f.resonance>0){
+      f.resonance--;
+      if(f.resonance===0 && f.resonanceTarget?.hp>0){
+        impact(f,f.resonanceTarget,8+2*(f.specialPower||0),'#ed85c3',6);
+        f.resonanceTarget=null;
+      }
+    }
+    if(f.sweep>0){
+      f.sweep--;
+      const dx=f.face*((other.x+other.w/2)-(f.x+f.w/2));
+      if(!f.sweepHit && f.sweep<=17 && f.sweep>=7 &&
+         dx>=-25 && dx<=227 && Math.abs(other.y-f.y)<95 &&
+         impact(f,other,20+5*(f.specialPower||0),'#bdffc8',11)){
+        f.sweepHit=true;
+        other.vx=f.face*7;
       }
     }
   }
@@ -110,6 +163,35 @@
       }
       ctx.restore();
     }
+    if(f.blackFlash>0){
+      const x=f.x+f.w/2+f.blackFlashDir*40,y=f.y+52;
+      ctx.save();ctx.strokeStyle='#809bff';ctx.lineWidth=5;
+      for(let i=0;i<4;i++){
+        const dx=f.blackFlashDir*(i*13);
+        ctx.beginPath();ctx.moveTo(x-dx-19,y-21+i*10);
+        ctx.lineTo(x-dx+4,y-30+i*10);ctx.lineTo(x-dx+14,y-16+i*10);ctx.stroke();
+      }
+      ctx.restore();
+    }
+    if(f.nail){
+      ctx.save();ctx.fillStyle='#fde4b0';ctx.fillRect(Math.round(f.nail.x)-8,Math.round(f.nail.y)-2,14,4);
+      ctx.fillStyle='#e8a0b7';ctx.fillRect(Math.round(f.nail.x)-11,Math.round(f.nail.y),6,2);ctx.restore();
+    }
+    if(f.resonance>0 && f.resonanceTarget){
+      const x=f.resonanceTarget.x+f.resonanceTarget.w/2,y=f.resonanceTarget.y+19;
+      ctx.save();ctx.strokeStyle='#e9a4cb';ctx.lineWidth=3;ctx.beginPath();
+      ctx.moveTo(x-12,y-12);ctx.lineTo(x+12,y+12);
+      ctx.moveTo(x+12,y-12);ctx.lineTo(x-12,y+12);ctx.stroke();ctx.restore();
+    }
+    if(f.sweep>0){
+      const age=25-f.sweep,angle=-.65+Math.min(1,age/18)*1.7;
+      const x=f.x+f.w/2,y=f.y+52,dir=f.face;
+      ctx.save();ctx.strokeStyle='#1c2d33';ctx.lineWidth=11;ctx.beginPath();
+      ctx.moveTo(x-dir*20,y+20);ctx.lineTo(x+dir*Math.cos(angle)*205,y+Math.sin(angle)*83);ctx.stroke();
+      ctx.strokeStyle='#b4bdab';ctx.lineWidth=6;ctx.beginPath();
+      ctx.moveTo(x-dir*20,y+20);ctx.lineTo(x+dir*Math.cos(angle)*205,y+Math.sin(angle)*83);ctx.stroke();
+      ctx.restore();
+    }
     if(f.jackpot>0){
       ctx.save();ctx.fillStyle='#ffe58f';ctx.textAlign='center';ctx.font='bold 15px monospace';
       ctx.fillText('JACKPOT '+(f.jackpot/60).toFixed(1)+'s',f.x+f.w/2,f.y-21);ctx.restore();
@@ -119,6 +201,10 @@
     if(f.jackpot>0)return 'JACKPOT '+(f.jackpot/60).toFixed(1)+'s';
     if(f.cleave>0)return 'CLEAVE';
     if(f.pet>0)return 'DIVINE DOG '+(f.pet/60).toFixed(1)+'s';
+    if(f.blackFlash>0)return 'BLACK FLASH';
+    if(f.nail)return 'NAIL IN FLIGHT';
+    if(f.resonance>0)return 'RESONANCE '+(f.resonance/60).toFixed(1)+'s';
+    if(f.sweep>0)return 'WEAPON SWEEP';
     return f.specialCool?'SPECIAL '+Math.ceil(f.specialCool/60)+'s':'SPECIAL READY';
   }
   window.HakoneRoster={roster:ROSTER,descriptions:NAMES,init,onCast,melee,tick,behind,front,status};
