@@ -1,6 +1,6 @@
-"""Real-localhost-origin Chromium regression for additional Hakone shop artwork.
-Actual game files, iframe and native localStorage are used, not page.set_content.
-This is NOT a public GitHub Pages playthrough or a natural CPU-match test.
+"""Native-origin Chromium checks for the additive shop-art layer.
+Uses actual repository files, HTTP, DOM and localStorage. Direct enter/interact
+helpers make fixtures deterministic; this is not a public Pages playthrough.
 """
 from functools import partial
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -15,7 +15,8 @@ from playwright.sync_api import sync_playwright
 ROOT=Path(__file__).resolve().parents[1]
 OUT=Path(tempfile.mkdtemp(prefix='hakone-shop-art-'))
 class QuietHandler(SimpleHTTPRequestHandler):
-    def log_message(self, *_): pass
+    def log_message(self, *_):
+        pass
 server=ThreadingHTTPServer(('127.0.0.1',0),partial(QuietHandler,directory=str(ROOT)))
 thread=threading.Thread(target=server.serve_forever,daemon=True)
 thread.start()
@@ -50,9 +51,9 @@ try:
           }
           return {floors:floorHashes.length,uniqueFloors:new Set(floorHashes).size,icons:iconHashes.length,uniqueIcons:new Set(iconHashes).size,cachedFloors:HakoneShopArt.cachedFloors,cachedIcons:HakoneShopArt.cachedIcons,stateUntouched:before===JSON.stringify(HakoneLife.snapshot())};
         }''')
-        check('Eight distinct cached floors',report['floors']==report['uniqueFloors']==report['cachedFloors']==8,report)
-        check('Twenty-eight distinct nonempty item icons',report['icons']==report['uniqueIcons']==report['cachedIcons']==28,report)
-        check('Art calls do not change player state',report['stateUntouched'])
+        check('All eight rooms have distinct cached floors',report['floors']==report['uniqueFloors']==report['cachedFloors']==8,report)
+        check('All 28 inventory icons are distinct and nonempty',report['icons']==report['uniqueIcons']==report['cachedIcons']==28,report)
+        check('Rendering leaves player state untouched',report['stateUntouched'])
         page.evaluate("HakoneLife.enter('seven')")
         page.wait_for_function("HakoneLife.snapshot().room==='seven'")
         geometry=page.evaluate('''()=>{
@@ -60,9 +61,10 @@ try:
           for(const o of list)HakoneArt.prop(c,o,0,HakoneLife.snapshot());
           return before===JSON.stringify(list);
         }''')
-        check('Art preserves object geometry and E interactions',geometry)
+        check('Object positions and interaction data unchanged',geometry)
         def close():
-            if page.locator('#panel').evaluate('(e)=>e.open'): page.locator('#panelClose').click()
+            if page.locator('#panel').evaluate('(e)=>e.open'):
+                page.locator('#panelClose').click()
         def interact(id):
             close()
             page.evaluate('(id)=>HakoneLife.interact(HakoneLife.objects().find(o=>o.id===id))',id)
@@ -72,32 +74,32 @@ try:
             close()
         buy('shelf2','Frozen smoothie cup')
         interact('blender');page.get_by_role('button',name='Prepare Frozen smoothie cup',exact=True).click()
-        check('Smoothie still prepares',page.evaluate('HakoneLife.snapshot().bag.smoothie===1 && HakoneLife.snapshot().bag.smoothieCup===0'))
+        check('New blender art retains real smoothie preparation',page.evaluate('HakoneLife.snapshot().bag.smoothie===1 && HakoneLife.snapshot().bag.smoothieCup===0'))
         buy('shelf0','Bento lunch box')
         interact('microwave');page.get_by_role('button',name='Prepare Bento lunch box',exact=True).click()
-        check('Bento still warms',page.evaluate('HakoneLife.snapshot().bag.warmBento===1 && HakoneLife.snapshot().bag.bento===0'))
+        check('New microwave art retains real bento preparation',page.evaluate('HakoneLife.snapshot().bag.warmBento===1 && HakoneLife.snapshot().bag.bento===0'))
         buy('shelf2','SEVEN CAFE cup')
         interact('coffee');page.get_by_role('button',name='Prepare SEVEN CAFE cup',exact=True).click()
-        check('Coffee still brews',page.evaluate('HakoneLife.snapshot().bag.cafe===1 && HakoneLife.snapshot().bag.cafeCup===0'))
-        check('Purchase prices unchanged',page.evaluate('HakoneLife.snapshot().coins')==7)
+        check('New coffee machine art retains brewing',page.evaluate('HakoneLife.snapshot().bag.cafe===1 && HakoneLife.snapshot().bag.cafeCup===0'))
+        check('Purchases charge original prices only',page.evaluate('HakoneLife.snapshot().coins')==7)
         page.reload();page.wait_for_function('window.HakoneShopArt && window.HakoneLife')
-        check('Native-storage items survive reload',page.evaluate('HakoneLife.snapshot().bag.smoothie===1 && HakoneLife.snapshot().bag.warmBento===1 && HakoneLife.snapshot().bag.cafe===1'))
-        check('No second starter gift',page.evaluate('HakoneLife.snapshot().coins')==7)
+        check('Prepared items survive native-storage reload',page.evaluate('HakoneLife.snapshot().bag.smoothie===1 && HakoneLife.snapshot().bag.warmBento===1 && HakoneLife.snapshot().bag.cafe===1'))
+        check('Reload does not grant starter coins twice',page.evaluate('HakoneLife.snapshot().coins')==7)
         page.screenshot(path=str(OUT/'seven-eleven.png'))
         page.locator('#fighterButton').click()
-        check('Sixteen town fighters retained',page.locator('#panelBody > button').count()==16)
+        check('Sixteen-fighter selection preserved',page.locator('#panelBody > button').count()==16)
         close();page.locator('#arenaTab').click()
         page.frame_locator('#arenaFrame').locator('#c1').wait_for()
-        check('Sixteen arena fighters retained',page.frame_locator('#arenaFrame').locator('#c1 option').count()==16)
+        check('Arena retains sixteen fighters',page.frame_locator('#arenaFrame').locator('#c1 option').count()==16)
         page.wait_for_function("document.getElementById('arenaFrame').contentWindow.SpriteAnimations?.ready('Gojo') && document.getElementById('arenaFrame').contentWindow.SpriteAnimations?.ready('Toji')")
         page.locator('#leaveFight').click()
-        check('Leave fight preserves shop room',page.evaluate("HakoneLife.snapshot().mode==='town' && HakoneLife.snapshot().room==='seven'"))
-        check('Abandoning fight gives no coins',page.evaluate('HakoneLife.snapshot().coins')==7)
+        check('Leaving fight restores the shop room',page.evaluate("HakoneLife.snapshot().mode==='town' && HakoneLife.snapshot().room==='seven'"))
+        check('Leaving fight awards no coins',page.evaluate('HakoneLife.snapshot().coins')==7)
         page.set_viewport_size({'width':390,'height':850})
         page.screenshot(path=str(OUT/'seven-eleven-mobile.png'))
         check('390px page does not overflow',page.evaluate('document.documentElement.scrollWidth <= innerWidth'))
         check('No JS exceptions',not errors,errors)
-        check('No failed JS or sprite requests',not [u for u in failed if '.js' in u or '.png' in u],failed)
+        check('No failed script or sprite requests',not [u for u in failed if '.js' in u or '.png' in u],failed)
         print(json.dumps({'passed':len(results),'results':results,'screenshots':str(OUT),'scope':'Native localhost origin; not public GitHub Pages'},indent=2))
         context.close();browser.close()
 finally:

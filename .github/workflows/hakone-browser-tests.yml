@@ -2,7 +2,7 @@ name: Hakone browser regression
 
 on:
   push:
-    branches: [main, hakone-town-expansion]
+    branches: [main, hakone-town-expansion, hakone-shop-polish]
     paths:
       - "adventure/**"
       - "tests/test_hakone.py"
@@ -36,5 +36,5 @@ jobs:
         run: python tests/test_hakone_arena.py
       - name: Test real-origin Hakone integration
         run: python tests/test_hakone_origin.py
-      - name: Test shop-art with live localhost origin
+      - name: Test shop art and preparation at a real origin
         run: python tests/test_hakone_shop_art.py
