@@ -235,3 +235,23 @@ A subsequent documentation-triggered workflow run on SHA 93487f55 failed the **p
 - GitHub Actions [run 42632918057](https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42632918057) **passed** on exact branch commit `c6353ba5242bf1007ff23665ea952b5be1888872` after the new CPU AI changes and tests. Parsed job logs confirm **42 town Chromium checks, 84 arena Chromium checks (66 existing plus 18 new deterministic CPU-special checks), and 21 real-localhost-origin Chromium integration checks**.
 - The 18 new arena checks verify Gojo CPU casts Blue, Toji CPU offensive direction/hit and defensive direction, and one AI special activation per remaining 14 fighters. All passed on actual Chromium; this does **not** establish difficulty fairness or public-origin persistence.
 - The tested game changes were fast-forwarded to `main` with a checked expected branch head. Pages deployment for that commit is checked separately; do not conflate the regression success with CDN publication.
+
+
+## Session 8: November 9, 2026, morning Pacific — retail interior and product art pass
+
+### Implemented on the expansion branch
+- Added additive \`adventure/shop_art.js\`, which wraps the original town renderer without changing object placements, inventory data, wallet/save keys, combat, or interactions.
+- Distinct cached floors across all eight town interiors: pale tile for 7-Eleven, stone tones for onsen and station, tatami for inn and dojo, and varying timber for restaurants and souvenir shop. Existing doors, walls and interaction targets remain functional.
+- Replaced generic inventory drawings with 28 independently drawn low-resolution icons, including individual drinks, onigiri, hot meals, equipment, souvenirs and prepared-versus-unprepared cups and bento.
+- Improved appearance of vending-machine drink rows and HOT/COLD signs; shelves display their actual product stock; microwave, smoothie blender, coffee brewer and fictional coin bank have clearer silhouettes and pixel-letter labels.
+- \`adventure/index.html\` loads the art layer between existing art.js and town.js and labels the build DEVELOPMENT PREVIEW 0.4. Original root and /preview/ files are untouched.
+
+### Tests and limitations
+- \`node --check\` parsed the candidate script; Python syntax compilation passed for the new native-origin Chromium test.
+- An **isolated local real-Chromium canvas test with explicitly stubbed legacy data/rendering** passed: all eight interiors were cached, 28 product icons were uniquely rendered, existing object data remained intact, and no runtime error appeared. A screenshot was inspected. This is **not** a full-game or hosted-browser test.
+- Added \`tests/test_hakone_shop_art.py\` to exercise actual localhost-origin browser rendering, native storage, the sixteen-character arena iframe, all three food-preparation machines, persistence, original prices, and mobile layout. Updated the CI workflow to run it with existing suites. **GitHub Actions validation is pending** until its exact run finishes; do not claim production success on the basis of the isolated check.
+- All store names, game prices, item effects and locations are fictional. No external commercial art or assets were copied.
+
+### Research and next priorities
+Research: SLYNYRD [Pixelblog 35](https://www.slynyrd.com/blog/2021/11/30/pixelblog-35-top-down-interiors) for tile rhythm/interior furniture; [Pixelblog 20](https://www.slynyrd.com/blog/2019/8/27/pixelblog-20-top-down-tiles) for material vocabulary; and [7-Eleven Japan official visitor information](https://www.sej.co.jp/in/en.html) for reference store products and machine types.
+Next: inspect branch CI and fix genuine failures before fast-forward publication; verify public Pages deployment. Further work remains: natural-match CPU fairness sampling and public-origin browser playthrough, plus sharper fighter motion silhouettes. The real-origin integration suite validates localhost, not public GitHub Pages.
