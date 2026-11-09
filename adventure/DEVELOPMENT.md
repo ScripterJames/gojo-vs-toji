@@ -136,3 +136,11 @@ After verifying that main had not advanced, fast-forwarded main to commit \`fd47
 1. Inspect the current GitHub Actions **Hakone browser regression** run and, if failed, read actual job logs and fix the failing test or environment before declaring Chromium validation. Publish only after bounded checks and current main-head verification; verify Pages deployment.
 2. Expand toward the planned 16-fighter roster with distinct specials and sprites: Yuta, Choso and Todo are suggested next. Keep balancing across the roster rather than adding superficial recolors.
 3. Real hosted-browser town → arena → leave-and-return playthrough and origin persistence; visually inspect PNG legacy atlases versus new raster fighters. The 7-Eleven shop already has real product-inspired interactions; further art polish should improve tiled flooring, machine icons, and E prompt legibility without changing the established purchase/preparation/quest loops.
+
+### Chromium CI verification, November 9, 2026 at approximately 02:05 PST
+GitHub Actions [Hakone browser regression run 42598175333](https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42598175333), commit 56e93b192f848c3aca1294dde03e976981d9223c, completed **successfully** on Ubuntu 24.04 with Playwright 1.60.0 and real headless Chromium.
+- **37/37 town checks passed:** purchases, vending and 7-Eleven preparation, coins and stamp quests, keyboard movement and E doorway interaction, outdoor reachability, all eleven traveler choices, separate modes and leave-fight return, mobile layout and no JS exceptions.
+- **25/25 separate arena checks passed:** eleven selectors, real keyboard A specials for Toge/Panda/Nanami, range and dodge limits, stun/guard, new canvas sprites, upgrades, and no JS exceptions.
+- Both browser suites load checked-out HTML and JS via page.set_content with explicit in-memory localStorage test doubles and manually advanced arena frames. They do not prove live hosted-origin persistence, network loading, the live iframe Escape/audio shutdown path, or downloads of original Gojo/Toji PNG atlases. Those remain next priority.
+- Earlier run 42597990938 failed before tests due unsupported Ubuntu 26.04. Workflow fixed to ubuntu-24.04 and subsequent CI above passed.
+
