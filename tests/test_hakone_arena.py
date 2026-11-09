@@ -104,6 +104,57 @@ with sync_playwright() as p:
         page.keyboard.up("a")
         return result
 
+    # CPU AI must use each fighter's existing unique special, not just melee.
+    # A fixed random source makes the AI decision deterministic while retaining
+    # real updateF physics in Chromium. This does NOT measure human difficulty.
+    def cpu_tick():
+        return page.evaluate("""() => {
+            const original = Math.random;
+            Math.random = () => .1;
+            try {
+                const f=fighters[1], other=fighters[0];
+                updateF(f,other,{},true);
+                return {cool:f.specialCool,blue:f.blue,dash:f.dashDirection,
+                        hp:other.hp,invul:f.invul};
+            } finally { Math.random=original; }
+        }""")
+
+    start("Toji", "Gojo", gap=170)
+    page.locator("#mode").select_option("cpu")
+    gojo_cpu=cpu_tick()
+    check("CPU Gojo actively casts Blue",
+          gojo_cpu["blue"]>0 and gojo_cpu["cool"]>0,gojo_cpu)
+
+    start("Gojo", "Toji", gap=180)
+    page.locator("#mode").select_option("cpu")
+    toji_cpu=cpu_tick()
+    check("CPU Toji can attack with a forward dash",
+          toji_cpu["dash"]==-1 and toji_cpu["invul"]>0,toji_cpu)
+    dash_result=page.evaluate("""() => {
+        const original=Math.random;
+        Math.random=()=>.1;
+        try {
+            for(let i=0;i<14;i++)updateF(fighters[1],fighters[0],{},true);
+            return {hp:fighters[0].hp,hit:fighters[1].dashHit};
+        } finally { Math.random=original; }
+    }""")
+    check("CPU Toji offensive dash lands once",
+          dash_result["hp"]==77 and dash_result["hit"],dash_result)
+
+    start("Gojo", "Toji", gap=130)
+    page.locator("#mode").select_option("cpu")
+    page.evaluate("fighters[0].blue=120")
+    evade_cpu=cpu_tick()
+    check("CPU Toji still evades an active Blue",
+          evade_cpu["dash"]==1 and evade_cpu["invul"]>0,evade_cpu)
+
+    for cpu_name in [n for n in roster if n not in ["Gojo", "Toji"]]:
+        start("Toji", cpu_name, gap=170)
+        page.locator("#mode").select_option("cpu")
+        state=cpu_tick()
+        check("CPU " + cpu_name + " activates unique special",
+              state["cool"]>0,state)
+
     start("Toge", gap=130)
     x = cast(10)
     check("Keyboard A triggers Cursed Speech with stun",
