@@ -77,11 +77,12 @@
 
   function effects(ctx, f, tick, characterPose) {
     const centre = f.x + f.w / 2;
-    if (characterPose.state === 'punch' && f.attack === 7) {
-      sparks(ctx, centre + f.face * 80, f.y + 47, '#f9e2b3');
-    }
-    if (characterPose.state === 'kick' && f.attack === 12) {
-      sparks(ctx, centre + f.face * 98, f.y + 64, '#fbf7ff');
+    // Only show impact sparks when a hitbox actually connected.
+    if (f.hitSpark > 0) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, f.hitSpark / 7);
+      sparks(ctx, f.hitSparkX, f.hitSparkY, f.hitSparkColor);
+      ctx.restore();
     }
   }
 
