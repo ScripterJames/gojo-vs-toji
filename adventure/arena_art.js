@@ -1,4 +1,4 @@
-/* Original low-res 36×50 raster fighters, not borrowed sprites.
+/* Original low-res 64×50 raster fighters, not borrowed sprites.
    All animation frames are cached, with consistent pivot and whole-pixel positioning.
    Palette and silhouette first: Hakari = cropped pale hair & green jacket;
    Sukuna = swept pink hair & facial marks; Megumi = tall dark spikes & navy uniform. */
@@ -9,7 +9,7 @@
     Sukuna:{hair:'#e4a0aa',hairShadow:'#b35d79',skin:'#d9a089',shirt:'#71465f',light:'#a46a77',pants:'#2c303f',shoe:'#171e28',accent:'#ef597f',ink:'#29212e'},
     Megumi:{hair:'#1e2b40',hairShadow:'#35465c',skin:'#d9ab90',shirt:'#26344d',light:'#45617c',pants:'#252e44',shoe:'#1c2132',accent:'#aebeff',ink:'#182034'}
   };
-  const cache=new Map(),SIZE=36,HEIGHT=50,SCALE=3,GROUND=450;
+  const cache=new Map(),SIZE=64,HEIGHT=50,SCALE=3,ORIGIN_X=18,GROUND=450;
   const clips={
     idle: {count:4,step:10},walk:{count:6,step:5},jump:{count:1,step:1},
     punch:{count:6,step:2},kick:{count:6,step:3},special:{count:4,step:5},
@@ -42,7 +42,7 @@
     const walking=key==='walk',punch=key==='punch',kick=key==='kick';
     const phase=i,step=walking?[0,2,3,0,-2,-3][i]:0;
     const bob=walking&&[1,2,4,5].includes(i)?-1:0;
-    const striking=punch?[0,-3,3,12,17,4][i]:0;
+    const striking=punch?[0,-3,3,14,28,6][i]:0;
     const kicking=kick?[0,0,4,9,15,4][i]:0;
     const jumping=key==='jump';
     const defeated=key==='defeated';
@@ -105,7 +105,7 @@
     ctx.globalAlpha=Math.max(.1,.3-air/300);
     ctx.fillStyle='#080a1c';ctx.beginPath();ctx.ellipse(center,455,33-Math.min(12,air/8),5,0,0,Math.PI*2);ctx.fill();
     ctx.globalAlpha=1;ctx.translate(center,0);ctx.scale(f.face<0?-1:1,1);
-    ctx.drawImage(img,-Math.round(SIZE*SCALE/2),foot-HEIGHT*SCALE,SIZE*SCALE,HEIGHT*SCALE);
+    ctx.drawImage(img,-ORIGIN_X*SCALE,foot-HEIGHT*SCALE,SIZE*SCALE,HEIGHT*SCALE);
     ctx.restore();
     return true;
   }
