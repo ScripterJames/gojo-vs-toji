@@ -22,10 +22,10 @@
     announcementUntil = 110;
   }
   function opponentName(playerName, round = stage) {
-    const preferred = round === 1 ? firstEnemy : ROSTER[(round - 2) % ROSTER.length];
-    if (preferred !== playerName) return preferred;
-    const index = ROSTER.indexOf(preferred);
-    return ROSTER[(index + 1) % ROSTER.length];
+    // Each wave brings a different fighter until the available roster is exhausted.
+    // Allow an explicitly selected mirror opponent in wave one.
+    const sequence = [firstEnemy, ...ROSTER.filter(n => n !== firstEnemy && n !== playerName)];
+    return sequence[(round - 1) % sequence.length];
   }
   function prepareEnemy(enemy) {
     enemy.maxHp = Math.min(250, 100 + 12 * (stage - 1));
