@@ -203,14 +203,22 @@ try:
               and page.evaluate("HakoneLife.snapshot().fighter") == "Mahito"
               and page.evaluate("HakoneLife.snapshot().bag.water") == 1)
 
-        # Native storage-driven doorway spawn tests actual E interaction and
-        # persistent room changes; no Storage method overrides are installed.
-        page.evaluate(f"""() => {{
+        # Open a NEW tab for the doorway spawn. The old town tab's pagehide
+        # handler saves on navigation, so modifying its localStorage immediately
+        # before reload would correctly be overwritten by its still-live state.
+        # A one-time init script sets the new tab's genuine origin storage BEFORE
+        # town.js initializes. sessionStorage prevents respawn on later reloads.
+        page.close()
+        page = context.new_page()
+        page.on("pageerror", lambda err: exceptions.append(str(err)))
+        page.add_init_script(script=f"""(() => {{
+          if (sessionStorage.getItem('__hakone_test_spawn')) return;
           const key='{SAVE}',s=JSON.parse(localStorage.getItem(key));
           s.room=null;s.x=152;s.y=224;
           localStorage.setItem(key,JSON.stringify(s));
-        }}""")
-        page.reload(wait_until="load")
+          sessionStorage.setItem('__hakone_test_spawn','yes');
+        }})()""")
+        page.goto(base + "/adventure/", wait_until="load")
         page.wait_for_function("() => !!window.HakoneLife")
         page.locator("#world").focus()
         page.wait_for_timeout(120)
