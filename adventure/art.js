@@ -55,7 +55,7 @@ window.HakoneArt = (() => {
   function sprite(name,dir,phase){
     const key=name+dir+phase;if(cache.has(key))return cache.get(key);
     const cv=document.createElement('canvas');cv.width=28;cv.height=38;const c=cv.getContext('2d');
-    const gojo=name==='Gojo',npc=!['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo'].includes(name),skin=name==='Panda'?'#f2ece2':'#dcac83';
+    const gojo=name==='Gojo',npc=!['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo','Jogo','Mahito'].includes(name),skin=name==='Panda'?'#f2ece2':name==='Jogo'?'#d9b08a':name==='Mahito'?'#d2b9ad':'#dcac83';
     const palette={
       Gojo:['#e7ebdf','#384253','#b4b6c0'],
       Toji:['#242e3a','#3b504e','#7c7482'],
@@ -70,7 +70,9 @@ window.HakoneArt = (() => {
       Nanami:['#e3c47f','#b8a680','#526176'],
       Yuta:['#252a39','#e9e5db','#24354c'],
       Choso:['#272a36','#e0d8ce','#5c4955'],
-      Todo:['#2d3545','#51465b','#324053']
+      Todo:['#2d3545','#51465b','#324053'],
+      Jogo:['#db8b4a','#784550','#3f3542'],
+      Mahito:['#acc9d5','#536c87','#454c70']
     };
     const [hair,shirt,pants]=palette[name]||(npc?['#65483b','#ae7255','#556378']:['#242e3a','#3b504e','#7c7482']);
     const step=[0,1,2,0,-1,-2][phase%6],bob=phase%3===1?1:0,back=dir==='up';
@@ -112,6 +114,18 @@ window.HakoneArt = (() => {
       if(!back)rect(c,16,11+bob,3,4,'#a0445e');}
     if(name==='Todo'){rect(c,12,0+bob,10,7,'#2d3545');rect(c,16,-2+bob,7,5,'#2d3545');
       rect(c,7,12+bob,18,3,'#5c465b');rect(c,5,20+bob,5,6,'#9b806d');}
+    if(name==='Jogo'){
+      rect(c,9,2+bob,15,10,'#b56b43');rect(c,12,-2+bob,9,7,'#e3a055');
+      rect(c,15,-4+bob,5,4,'#ffca78');
+      if(!back){rect(c,13,11+bob,7,3,'#d9b08a');rect(c,16,11+bob,2,2,'#29303a');}
+      rect(c,9,19+bob,13,3,'#a57555');
+    }
+    if(name==='Mahito'){
+      rect(c,7,2+bob,18,7,'#b9d2dd');rect(c,6,6+bob,5,15,'#7996ac');
+      rect(c,22,5+bob,5,17,'#acc9d5');rect(c,11,0+bob,12,4,'#d0dfe8');
+      if(!back){rect(c,19,11+bob,5,1,'#53657f');rect(c,17,11+bob,1,5,'#53657f');}
+      rect(c,11,17+bob,13,2,'#9db8cc');
+    }
     cache.set(key,cv);return cv;
   }
   function person(c,name,x,y,dir='down',phase=0){c.drawImage(sprite(name,dir,phase),Math.round(x-14),Math.round(y-34));}
