@@ -185,3 +185,24 @@ GitHub Actions [Hakone browser regression run 42598175333](https://github.com/Sc
 1. Verify actual hosted-origin browser storage, delivered PNG assets and town→arena→town iframe navigation, preferably with an origin-serving Playwright integration test; no browser/storage double for this test. Confirm real service availability separately.
 2. Visually inspect all sixteen sprites at native and scaled sizes, compare readable move anticipation and frames; refine silhouettes and town machine/shop furnishings rather than simply adding characters.
 3. Evaluate CPU balance across the full roster, particularly Jogo warning/dodge and Mahito slowdown against Toji's dash and Gojo's nonlethal Blue. Record genuine tests before making tuning claims.
+
+
+## Session 6: November 9, 2026, approximately 05:15 PST — real-origin local-browser integration
+
+### Changes made
+- Added **tests/test_hakone_origin.py**, a new Playwright/Chromium integration test that runs the actual repository over a local **HTTP server** (127.0.0.1, random ephemeral port). It does not use page.set_content, inlined game scripts, iframe stubs, mocked localStorage methods, or artificial game-loop timing.
+- Updated **.github/workflows/hakone-browser-tests.yml** to run the new test alongside the existing town and arena suites, including on changes to the new test file.
+- Corrected the town UI's out-of-date "fourteen fighters" wording to **sixteen** in **adventure/index.html**; this was a text-only change. No combat, shop, upgrade or save engine was modified, and **root /index.html and /preview/ were untouched**.
+- The initial integration test revealed that deliberately overwriting a save key immediately before a page reload is unreliable: the *old tab's existing pagehide save handler* correctly writes its in-memory state back over the test's manually edited key. Fixed the test setup by starting a fresh same-origin tab and performing a one-time native localStorage spawn adjustment before town.js initializes. This is a test-fixture issue, not evidence that the game loses progress.
+
+### Actually verified
+- **GitHub Actions run [42623473089](https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42623473089) passed** on tested branch SHA **9b2c3b1bb0cb08d2897c456ab2d5e788456ba1d6**.
+- **21 checks** passed in Chromium with a **real localhost HTTP origin**, the browser's **native localStorage**, a real same-origin arena iframe and real PNG asset loading. This verified: startup gift once; town keyboard movement; vending purchase and persisted bag; Mahito selection and purchased Strength rank surviving reload; all sixteen arena options; Gojo and Toji PNG atlases actually loaded; upgrade rank applied to Mahito's arena punch; actual CPU-win reward logic paying 35 coins; live cross-frame storage event updating the town wallet; Escape and the visible Leave fight button returning to town; combat preserving the player's town inventory; keyboard E entering/exiting 7-Eleven; room save surviving reload; no JS exceptions or failed game script/sprite resources.
+- The CPU reward path used a **deliberately reduced opponent HP** in the real running browser, followed by an actual keyboard punch. This tests the reward and synchronization path; it **does not** establish that a complete unmodified CPU match is balanced or winnable.
+- The same Actions run passed **42 existing town checks** and **66 existing arena checks**, which still use in-memory page HTML and disclosed storage doubles. These results are separate from the 21 native-origin checks.
+
+### Boundaries and next priorities
+1. This validates a locally served site at a real origin, **not the public scripterjames.github.io origin**. Public Pages deployment, CDN freshness, real user device/browser saves, and a complete naturally played fight are not yet proven by this test.
+2. Inspect all sixteen sprites and storefront interiors *visually* at native and scaled sizes, then improve silhouette contrast, motion phases, vending/7-Eleven props, floor tiles and depth sorting. Avoid disturbing existing working interactions.
+3. Test CPU difficulty and fairness across the full roster, including Gojo Blue (five seconds, nonlethal) and Toji's one-hit dash, in longer natural matches.
+4. Maintain the baseline: 50 starter coins once, +35 per CPU win, individual persistent Strength/Health/Speed/Special ranks at 35/70/105 coin costs, town as separate game mode, and every placed item interactive.
