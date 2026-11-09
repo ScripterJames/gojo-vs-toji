@@ -66,8 +66,8 @@ with sync_playwright() as p:
     page.set_content(html)
     page.wait_for_timeout(150)
     roster = page.evaluate("HakoneRoster.roster")
-    check("Eleven playable choices", len(roster) == 11, roster)
-    for name in ["Toge", "Panda", "Nanami"]:
+    check("Fourteen playable choices", len(roster) == 14, roster)
+    for name in ["Toge", "Panda", "Nanami", "Yuta", "Choso", "Todo"]:
         check(name + " has a sprite", page.evaluate(
             "(n) => HakoneArtFighters.ready(n)", name))
         check(name + " has a special description", bool(page.evaluate(
@@ -75,9 +75,9 @@ with sync_playwright() as p:
         check(name + " has an upgrade bank", page.evaluate(
             "(n) => !!UpgradeShop.levels[n]", name))
     check("Initial 50 coins", page.evaluate("UpgradeShop.coins") == 50)
-    check("Arena has 11 options for each player",
-          page.locator("#c1 option").count() == 11
-          and page.locator("#c2 option").count() == 11)
+    check("Arena has 14 options for each player",
+          page.locator("#c1 option").count() == 14
+          and page.locator("#c2 option").count() == 14)
 
     controls = "{left:'arrowleft',right:'arrowright',jump:'arrowup',jumpAlt:' ',punch:'f',kick:'d',special:'a'}"
     def start(name, enemy="Gojo", gap=110):
@@ -144,8 +144,59 @@ with sync_playwright() as p:
     check("Purchased special rank applies in fight",
           page.evaluate("fighters[0].specialPower") == 1)
 
+    # Additional styles: reactive defense, charged ranged attack, and position swapping.
+    start("Yuta", gap=160)
+    page.keyboard.down("a")
+    page.evaluate(f"""() => {{
+        updateF(fighters[0],fighters[1],{controls},false);
+        fighters[0].hp=82;
+        updateF(fighters[0],fighters[1],{controls},false);
+    }}""")
+    page.keyboard.up("a")
+    check("Rika counters a close attack once",
+          page.evaluate("fighters[0].rikaTriggered && fighters[0].hp==87 && fighters[1].hp==78"))
+    page.evaluate(f"""() => {{
+        for(let i=0;i<20;i++)updateF(fighters[0],fighters[1],{controls},false);
+    }}""")
+    check("Rika cannot counter twice",page.evaluate("fighters[1].hp")==78)
+
+    start("Yuta", gap=600)
+    page.keyboard.down("a")
+    page.evaluate(f"""() => {{
+        updateF(fighters[0],fighters[1],{controls},false);
+        fighters[0].hp=70;updateF(fighters[0],fighters[1],{controls},false);
+    }}""")
+    page.keyboard.up("a")
+    check("Rika has bounded counter reach",page.evaluate("fighters[1].hp")==100)
+
+    start("Choso",gap=380)
+    x=cast(16)
+    check("Piercing Blood hits distant opponent",x["hp"]==80,x)
+    start("Choso",gap=650)
+    x=cast(27)
+    check("Piercing Blood cannot hit beyond 555px",x["hp"]==100,x)
+    start("Choso",gap=330)
+    page.keyboard.down("a")
+    page.evaluate(f"""() => {{
+        for(let i=0;i<8;i++)updateF(fighters[0],fighters[1],{controls},false);
+        fighters[1].y=165;
+        for(let i=0;i<19;i++)updateF(fighters[0],fighters[1],{controls},false);
+    }}""")
+    page.keyboard.up("a")
+    check("Piercing Blood can be dodged vertically",page.evaluate("fighters[1].hp")==100)
+
+    start("Todo",gap=185)
+    x=cast(10)
+    check("Boogie Woogie swaps positions and stuns",
+          page.evaluate("fighters[0].x>fighters[1].x && fighters[1].hitstun>0 && fighters[1].hp==100"))
+    start("Todo",gap=500)
+    x=cast(23)
+    check("Boogie Woogie misses distant target",
+          page.evaluate("fighters[0].x<fighters[1].x && fighters[1].hitstun==0"))
+    check("Boogie Woogie causes no direct HP damage",page.evaluate("fighters[1].hp")==100)
+
     # Render every new fighter with its real 2D canvas drawing path.
-    for name in ["Toge", "Panda", "Nanami"]:
+    for name in ["Toge", "Panda", "Nanami", "Yuta", "Choso", "Todo"]:
         start(name, "Gojo", gap=100)
         page.evaluate("draw()")
         check(name + " canvas contains colored pixels",
