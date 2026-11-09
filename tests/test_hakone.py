@@ -8,6 +8,7 @@ case exercises graceful degradation. Reports go to a temporary directory.
 """
 from pathlib import Path
 import json
+import re
 import os
 import shutil
 import tempfile
@@ -18,7 +19,7 @@ A=ROOT/'adventure'
 OUT=Path(tempfile.mkdtemp(prefix='hakone-test-'))
 base=(A/'index.html').read_text()
 for name in ['data','art','town']:
-    base=base.replace(f'<script src="{name}.js?v=hakone-01"></script>', '<script>'+(A/f'{name}.js').read_text()+'</script>')
+    base=re.sub(rf'<script src="{name}\\.js\\?v=[^"]+"></script>',lambda _:'<script>'+(A/f'{name}.js').read_text()+'</script>',base)
 COINS='gojo-vs-toji-arcade-coins-v1'
 LEVELS='gojo-vs-toji-upgrade-levels-v1'
 results=[]
@@ -96,6 +97,10 @@ with sync_playwright() as p:
     page.locator('#fighterButton').click()
     page.get_by_role('button',name='Hakari · Jackpot',exact=True).click()
     check('New fighter selection persists in town',snap()['fighter']=='Hakari')
+    for name,ability in [('Yuji','Black Flash'),('Nobara','Nail + Resonance'),('Maki','Weapon Sweep')]:
+        page.locator('#fighterButton').click()
+        page.get_by_role('button',name=name+' · '+ability,exact=True).click()
+        check('Town selects '+name,snap()['fighter']==name)
     page.locator('#fighterButton').click()
     page.get_by_role('button',name='Toji · Heavenly Restriction',exact=True).click()
     check('Character selection',snap()['fighter']=='Toji')
