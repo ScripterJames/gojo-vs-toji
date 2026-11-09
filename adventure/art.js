@@ -55,8 +55,15 @@ window.HakoneArt = (() => {
   function sprite(name,dir,phase){
     const key=name+dir+phase;if(cache.has(key))return cache.get(key);
     const cv=document.createElement('canvas');cv.width=28;cv.height=38;const c=cv.getContext('2d');
-    const gojo=name==='Gojo',npc=!['Gojo','Toji'].includes(name),skin='#dcac83',hair=gojo?'#e7ebdf':npc?'#65483b':'#242e3a';
-    const shirt=gojo?'#384253':npc?'#ae7255':'#3b504e',pants=gojo?'#b4b6c0':npc?'#556378':'#7c7482';
+    const gojo=name==='Gojo',npc=!['Gojo','Toji','Hakari','Sukuna','Megumi'].includes(name),skin='#dcac83';
+    const palette={
+      Gojo:['#e7ebdf','#384253','#b4b6c0'],
+      Toji:['#242e3a','#3b504e','#7c7482'],
+      Hakari:['#e7d2a4','#456f5b','#5a516f'],
+      Sukuna:['#d790a2','#85515e','#303345'],
+      Megumi:['#1d293d','#2c3a58','#243348']
+    };
+    const [hair,shirt,pants]=palette[name]||(npc?['#65483b','#ae7255','#556378']:['#242e3a','#3b504e','#7c7482']);
     const step=[0,1,2,0,-1,-2][phase%6],bob=phase%3===1?1:0,back=dir==='up';
     rect(c,7,34,15,2,'#23373666');
     rect(c,8,25,5,8+step,pants);rect(c,16,25,5,8-step,pants);rect(c,7,32+step,7,3,'#26323d');rect(c,16,32-step,7,3,'#26323d');
@@ -67,6 +74,9 @@ window.HakoneArt = (() => {
     else {rect(c,7,5+bob,4,6,hair);rect(c,18,2+bob,4,5,hair);if(!back){rect(c,11,9+bob,2,2,'#293339');rect(c,17,9+bob,2,2,'#293339');}}
     if(dir==='left')rect(c,7,10+bob,3,3,skin);if(dir==='right')rect(c,20,10+bob,3,3,skin);
     if(name==='Toji'){rect(c,3,14+bob,5,8,'#946b9d');rect(c,1,11+bob,5,5,'#ad8caf');rect(c,2,12+bob,1,1,'#eccbba');}
+    if(name==='Hakari'){rect(c,9,0+bob,14,4,'#e7d2a4');rect(c,10,18+bob,6,3,'#8cb397');}
+    if(name==='Sukuna'){rect(c,11,1+bob,4,5,'#d790a2');rect(c,17,0+bob,5,6,'#df9cad');if(!back){rect(c,11,13+bob,3,1,'#813b50');rect(c,20,13+bob,3,1,'#813b50');}}
+    if(name==='Megumi'){rect(c,7,1+bob,4,9,'#1d293d');rect(c,12,-2+bob,4,9,'#1d293d');rect(c,18,0+bob,4,8,'#1d293d');rect(c,23,2+bob,4,8,'#1d293d');}
     cache.set(key,cv);return cv;
   }
   function person(c,name,x,y,dir='down',phase=0){c.drawImage(sprite(name,dir,phase),Math.round(x-14),Math.round(y-34));}
