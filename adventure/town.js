@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const D=HakoneData,A=HakoneArt,$=id=>document.getElementById(id);
-  const roster=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo'];
+  const roster=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo','Jogo','Mahito'];
   const canvas=$('world'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const SAVE='hakone-life-town-v1',COINS='gojo-vs-toji-arcade-coins-v1',LEVELS='gojo-vs-toji-upgrade-levels-v1',GIFT='gojo-vs-toji-upgrade-starter-v1';
   const memoryStore={};
@@ -97,8 +97,8 @@
       btn.onclick=()=>{if(!pay(price))return;levels[name]={...rank,[id]:level+1};write(LEVELS,JSON.stringify(levels));save();sound('purchase');notify(name+' upgraded. Start a new fight to use it.');upgrade();};row.append(words,btn);$('panelBody').append(row);
     }
   }
-  const fighterMoves={Gojo:'Blue',Toji:'Heavenly Restriction',Hakari:'Jackpot',Sukuna:'Cleave',Megumi:'Divine Dog',Yuji:'Black Flash',Nobara:'Nail + Resonance',Maki:'Weapon Sweep',Toge:'Cursed Speech',Panda:'Guard Stomp',Nanami:'Ratio Strike',Yuta:'Rika Guard',Choso:'Piercing Blood',Todo:'Boogie Woogie'};
-  function selectFighter(){panel('Choose your traveler','Fourteen playable fighters in Hakone Arena, each with a different special move. Your choice is saved for the next fight.',roster.map(name=>({label:name+' · '+fighterMoves[name],run:()=>{state.fighter=name;save();close();}})));}
+  const fighterMoves={Gojo:'Blue',Toji:'Heavenly Restriction',Hakari:'Jackpot',Sukuna:'Cleave',Megumi:'Divine Dog',Yuji:'Black Flash',Nobara:'Nail + Resonance',Maki:'Weapon Sweep',Toge:'Cursed Speech',Panda:'Guard Stomp',Nanami:'Ratio Strike',Yuta:'Rika Guard',Choso:'Piercing Blood',Todo:'Boogie Woogie',Jogo:'Volcanic Eruption',Mahito:'Idle Transfiguration'};
+  function selectFighter(){panel('Choose your traveler','Sixteen playable fighters in Hakone Arena, each with a different special move. Your choice is saved for the next fight.',roster.map(name=>({label:name+' · '+fighterMoves[name],run:()=>{state.fighter=name;save();close();}})));}
   function interior(id){
     const o=(key,type,name,x,y,w=32,h=32,extra={})=>({id:key,type,name,x,y,w,h,solid:true,...extra});
     const all=[o('exit','exit','Return to town',296,438,48,14,{solid:false}),o('window','sign','Window view',296,44,32,16),o('seat','seat','Take a seat',380,322,38,18)];
