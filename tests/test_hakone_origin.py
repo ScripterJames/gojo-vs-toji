@@ -211,9 +211,17 @@ try:
           localStorage.setItem(key,JSON.stringify(s));
         }}""")
         page.reload(wait_until="load")
+        page.wait_for_function("() => !!window.HakoneLife")
+        page.locator("#world").focus()
+        page.wait_for_timeout(120)
         page.keyboard.press("e")
         check("Keyboard E opens 7-Eleven via actual origin state",
-              page.evaluate("HakoneLife.snapshot().room") == "seven")
+              page.evaluate("HakoneLife.snapshot().room") == "seven",
+              page.evaluate("""() => ({
+                position:[HakoneLife.snapshot().x,HakoneLife.snapshot().y],
+                room:HakoneLife.snapshot().room,
+                prompt:document.getElementById('prompt').textContent
+              })"""))
         page.keyboard.press("e")
         check("Keyboard E leaves 7-Eleven and saves room state",
               page.evaluate("HakoneLife.snapshot().room") is None)
