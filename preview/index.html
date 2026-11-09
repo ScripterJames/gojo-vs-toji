@@ -1,7 +1,26 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gojo vs Toji</title><style>body{margin:0;background:#101020;color:white;font:16px system-ui;text-align:center}h1{margin:12px}canvas{width:min(96vw,960px);background:#18152c;border:3px solid #777;image-rendering:pixelated}button,select{font:inherit;padding:9px;margin:5px;border-radius:7px}p{margin:8px}</style></head><body><h1>⚡ Gojo vs Toji ⚡</h1><div id="menu"><label>Mode <select id="mode"><option value="cpu">1 Player vs CPU</option><option value="pvp">2 Players</option></select></label><label>Player 1 <select id="c1"><option>Gojo</option><option>Toji</option></select></label><label>Player 2 <select id="c2"><option>Toji</option><option>Gojo</option></select></label><button id="start">Start fight!</button><button id="soundToggle" type="button" title="Mute or unmute sound effects" aria-pressed="true">🔊 Sound ON</button></div><canvas id="game" width="960" height="540"></canvas><p>Player 1: ←/→ move · ↑ or Space jump · F punch (close range) · D kick (longer range) · A special</p><p>Player 2: J/L move · I jump · N punch · M kick · O special (2-player mode)</p><p id="status">Choose your fighters and start!</p><script src="js/animation.js?v=melee-129170a4"></script><script src="js/abilities.js?v=melee-129170a4"></script><script>
-const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;const keys={},floor=450,gravity=.75,BLUE_DURATION_MS=5000,BLUE_DRAIN_INTERVAL_MS=200,BLUE_PULL_RANGE=475;let fighters=[],playing=false,frame=0,particles=[];onkeydown=e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys[e.key.toLowerCase()]=true;if(window.AbilityFX)AbilityFX.arm()};onkeyup=e=>keys[e.key.toLowerCase()]=false;
-function make(name,x,side){return{name,x,y:floor-105,vx:0,vy:0,w:54,h:105,side,face:side===0?1:-1,hp:100,cool:0,specialCool:0,attack:0,attackKind:'',attackHit:false,hitSpark:0,hitSparkX:0,hitSparkY:0,hitSparkColor:'#fbe9be',hitNumber:0,hitNumberTick:0,hitstun:0,hitDirection:0,invul:0,blue:0,blueExpiresAt:0,blueLastUpdateAt:0,blueExposureMs:0,blueDamageDealt:0,blueHitPulse:0,specialHeld:false,flash:0,aiDelay:0}}
-function start(){if(window.AbilityFX){AbilityFX.arm();AbilityFX.play('start');}fighters=[make(c1.value,200,0),make(c2.value,700,1)];playing=true;frame=0;particles=[];document.getElementById('status').textContent='Fight!';}document.getElementById('start').onclick=start;
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Gojo vs Toji</title><style>body{margin:0;background:#101020;color:white;font:16px system-ui;text-align:center}h1{margin:12px}canvas{width:min(96vw,960px);background:#18152c;border:3px solid #777;image-rendering:pixelated}button,select{font:inherit;padding:9px;margin:5px;border-radius:7px}p{margin:8px}.shop-toggle{background:#f5d179;color:#171327;font-weight:800;border:2px solid #dba83c}
+#upgradeShop{max-width:960px;margin:10px auto 16px;text-align:left;background:#1c1a32;border:2px solid #665687;border-radius:12px;padding:16px;box-sizing:border-box}
+#upgradeShop[hidden]{display:none}.shop-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.shop-heading h2{margin:0}.shop-heading p{font-size:14px;color:#d6cee9}.coin-count{color:#f8d984}
+.upgrade-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.upgrade-character{padding:8px 12px;background:#25243e;border:1px solid #4c4264;border-radius:8px}
+.upgrade-character h3{margin:4px 0 12px}.upgrade-item{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 2px;border-top:1px solid #49425d}
+.upgrade-item small{display:block;color:#bab7d4;font-size:12px}.upgrade-item span{color:#f7cf6b;white-space:nowrap}
+.upgrade-item button{white-space:nowrap;min-width:91px;margin:0;font-size:13px;cursor:pointer}
+.upgrade-item button:disabled{opacity:.45;cursor:not-allowed}
+@media(max-width:680px){.upgrade-grid{grid-template-columns:1fr}} </style></head><body><h1>⚡ Gojo vs Toji ⚡</h1><div id="menu"><label>Mode <select id="mode"><option value="cpu">1 Player vs CPU</option><option value="pvp">2 Players</option></select></label><label>Player 1 <select id="c1"><option>Gojo</option><option>Toji</option></select></label><label>Player 2 <select id="c2"><option>Toji</option><option>Gojo</option></select></label><button id="start">Start fight!</button><button id="soundToggle" type="button" title="Mute or unmute sound effects" aria-pressed="true">🔊 Sound ON</button><button id="shopToggle" type="button" class="shop-toggle">🪙 Upgrades</button></div><section id="upgradeShop" hidden aria-label="Character upgrades"></section><canvas id="game" width="960" height="540"></canvas><p>Player 1: ←/→ move · ↑ or Space jump · F punch (close range) · D kick (longer range) · A special</p><p>Player 2: J/L move · I jump · N punch · M kick · O special (2-player mode)</p><p id="status">Choose your fighters and start!</p><script src="js/animation.js?v=melee-129170a4"></script><script src="js/abilities.js?v=melee-129170a4"></script><script src="js/upgrades.js?v=shop-f33f2b1"></script><script>
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;const keys={},floor=450,gravity=.75,BLUE_DURATION_MS=5000,BLUE_DRAIN_INTERVAL_MS=200,BLUE_PULL_RANGE=475;let fighters=[],playing=false,frame=0,particles=[];
+const c1=document.getElementById('c1'), c2=document.getElementById('c2'), mode=document.getElementById('mode');
+const shopToggle=document.getElementById('shopToggle'), upgradeShop=document.getElementById('upgradeShop');
+let shopOpen=false;
+if(window.UpgradeShop) UpgradeShop.mount(upgradeShop);
+shopToggle.onclick=()=>{shopOpen=!shopOpen;upgradeShop.hidden=!shopOpen;shopToggle.textContent=shopOpen?'✕ Close Upgrades':'🪙 Upgrades';if(shopOpen)window.UpgradeShop?.render();};onkeydown=e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys[e.key.toLowerCase()]=true;if(window.AbilityFX)AbilityFX.arm()};onkeyup=e=>keys[e.key.toLowerCase()]=false;
+function make(name,x,side){return{name,x,y:floor-105,vx:0,vy:0,w:54,h:105,side,face:side===0?1:-1,hp:100,cool:0,specialCool:0,attack:0,attackKind:'',attackHit:false,hitSpark:0,hitSparkX:0,hitSparkY:0,hitSparkColor:'#fbe9be',hitNumber:0,hitNumberTick:0,hitstun:0,hitDirection:0,invul:0,blue:0,blueExpiresAt:0,blueLastUpdateAt:0,blueExposureMs:0,blueDamageDealt:0,blueHitPulse:0,specialHeld:false,flash:0,aiDelay:0,dashHit:false,dashDirection:0}}
+function start(){if(window.AbilityFX){AbilityFX.arm();AbilityFX.play('start');}const left=make(c1.value,200,0),right=make(c2.value,700,1);
+if(window.UpgradeShop){UpgradeShop.apply(left);if(mode.value==='pvp') UpgradeShop.apply(right);else UpgradeShop.base(right);}
+fighters=[left,right];playing=true;frame=0;particles=[];
+shopOpen=false;upgradeShop.hidden=true;shopToggle.textContent='🪙 Upgrades';
+for(const key of Object.keys(keys))delete keys[key];document.getElementById('status').textContent='Fight!';}document.getElementById('start').onclick=start;
 const soundToggle=document.getElementById('soundToggle');
 function updateSoundToggle(){
  const supported=!!window.AbilityFX?.supported();
@@ -12,8 +31,11 @@ function updateSoundToggle(){
 }
 soundToggle.onclick=()=>{if(window.AbilityFX)AbilityFX.toggleMute();updateSoundToggle()};
 updateSoundToggle();
-function action(f,type){if(!playing||f.hitstun>0||(type==='special'&&(f.specialCool>0||(f.name==='Gojo'&&f.blue>0)))||(type!=='special'&&f.cool>0))return;let other=fighters[1-f.side];if(window.AbilityFX)AbilityFX.play(type==='special'?(f.name==='Gojo'?'blue':'dash'):type,f);if(type==='special'){f.attack=0;f.attackKind='';f.specialCool=(f.name==='Toji'&&document.getElementById('mode').value==='cpu'&&f.side===1)?300:95;if(f.name==='Gojo'){const now=performance.now();f.blue=300;f.blueExpiresAt=now+BLUE_DURATION_MS;f.blueLastUpdateAt=now;f.blueExposureMs=0;f.blueDamageDealt=0;for(let i=0;i<24;i++)particles.push({x:f.x+f.w/2+f.face*80,y:f.y+40,vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*8,life:32,color:'#40caff'});}else{f.invul=22;f.vx=(f.side===1&&document.getElementById('mode').value==='cpu'?-f.face:f.face)*19;f.flash=22;}}else{f.attack=type==='punch'?12:18;f.attackKind=type;f.attackHit=false;f.cool=type==='punch'?23:33;}}
-function updateF(f,other,ctrl,cpu){f.face=other.x>f.x?1:-1;f.cool=Math.max(0,f.cool-1);f.specialCool=Math.max(0,f.specialCool-1);f.attack=Math.max(0,f.attack-1);f.invul=Math.max(0,f.invul-1);const now=performance.now();const blueActiveMs=f.blueExpiresAt?Math.max(0,Math.min(now,f.blueExpiresAt)-f.blueLastUpdateAt):0;f.blueLastUpdateAt=now;f.blue=f.blueExpiresAt?Math.max(0,Math.ceil((f.blueExpiresAt-now)*.06)):0;f.flash=Math.max(0,f.flash-1);f.blueHitPulse=Math.max(0,f.blueHitPulse-1);f.hitSpark=Math.max(0,f.hitSpark-1);f.hitNumberTick=Math.max(0,f.hitNumberTick-1);let move=0;if(cpu){let dist=other.x-f.x;move=Math.abs(dist)>100?Math.sign(dist):Math.random()<.03?-Math.sign(dist):0;if(f.aiDelay--<=0){
+function action(f,type){if(!playing||f.hitstun>0||(type==='special'&&(f.specialCool>0||(f.name==='Gojo'&&f.blue>0)))||(type!=='special'&&f.cool>0))return;let other=fighters[1-f.side];if(window.AbilityFX)AbilityFX.play(type==='special'?(f.name==='Gojo'?'blue':'dash'):type,f);if(type==='special'){f.attack=0;f.attackKind='';// Gojo's five-second Blue has a recovery gap; Toji's powerful dash recharges in five seconds.
+f.specialCool=f.name==='Gojo'?420:300;if(f.name==='Gojo'){const now=performance.now();f.blue=300;f.blueExpiresAt=now+BLUE_DURATION_MS;f.blueLastUpdateAt=now;f.blueExposureMs=0;f.blueDamageDealt=0;f.blueTicks=0;for(let i=0;i<24;i++)particles.push({x:f.x+f.w/2+f.face*80,y:f.y+40,vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*8,life:32,color:'#40caff'});}else{f.invul=22;f.dashHit=false;
+f.dashDirection=(f.side===1&&mode.value==='cpu'?-f.face:f.face);
+f.vx=f.dashDirection*19;f.flash=22;}}else{f.attack=type==='punch'?12:18;f.attackKind=type;f.attackHit=false;f.cool=type==='punch'?23:33;}}
+function updateF(f,other,ctrl,cpu){if(f.invul===0)f.face=other.x>f.x?1:-1;f.cool=Math.max(0,f.cool-1);f.specialCool=Math.max(0,f.specialCool-1);f.attack=Math.max(0,f.attack-1);f.invul=Math.max(0,f.invul-1);const now=performance.now();const blueActiveMs=f.blueExpiresAt?Math.max(0,Math.min(now,f.blueExpiresAt)-f.blueLastUpdateAt):0;f.blueLastUpdateAt=now;f.blue=f.blueExpiresAt?Math.max(0,Math.ceil((f.blueExpiresAt-now)*.06)):0;f.flash=Math.max(0,f.flash-1);f.blueHitPulse=Math.max(0,f.blueHitPulse-1);f.hitSpark=Math.max(0,f.hitSpark-1);f.hitNumberTick=Math.max(0,f.hitNumberTick-1);let move=0;if(cpu){let dist=other.x-f.x;move=Math.abs(dist)>100?Math.sign(dist):Math.random()<.03?-Math.sign(dist):0;if(f.aiDelay--<=0){
 f.aiDelay=12+Math.random()*20;
 const threatenedByBlue=other.name==='Gojo'&&other.blue>0&&Math.abs((f.x+f.w/2)-(other.x+other.w/2+other.face*105))<170;
 const threatenedByStrike=other.attack>0&&other.face===Math.sign(f.x-other.x)&&Math.abs(dist)<(other.attackKind==='kick'?112:88)&&Math.abs(other.y-f.y)<85;
@@ -24,7 +46,7 @@ action(f,Math.random()<.55?'punch':'kick');
 }
 if(Math.random()<.15&&f.y>=floor-f.h)f.vy=-14;
 }}else{move=(keys[ctrl.right]?1:0)-(keys[ctrl.left]?1:0);if((keys[ctrl.jump]||(ctrl.jumpAlt&&keys[ctrl.jumpAlt]))&&f.y>=floor-f.h)f.vy=-14;if(keys[ctrl.punch])action(f,'punch');if(keys[ctrl.kick])action(f,'kick');const pressed=!!keys[ctrl.special];if(pressed&&!f.specialHeld)action(f,'special');f.specialHeld=pressed;}
-if(f.hitstun>0){f.vx=f.hitDirection*(1.5+f.hitstun*.65);f.hitstun--;}else if(f.invul===0)f.vx=move*4.4;f.x+=f.vx;f.vy+=gravity;f.y+=f.vy;if(f.y>floor-f.h){f.y=floor-f.h;f.vy=0;}f.x=Math.max(20,Math.min(886,f.x));// Attack frames match the extended fists/feet in the sprite animations.
+if(f.hitstun>0){f.vx=f.hitDirection*(1.5+f.hitstun*.65);f.hitstun--;}else if(f.invul===0)f.vx=move*(f.moveSpeed||4.4);f.x+=f.vx;f.vy+=gravity;f.y+=f.vy;if(f.y>floor-f.h){f.y=floor-f.h;f.vy=0;}f.x=Math.max(20,Math.min(886,f.x));// Attack frames match the extended fists/feet in the sprite animations.
 const punchWindow=f.attackKind==='punch'&&f.attack<=6&&f.attack>=3;
 const kickWindow=f.attackKind==='kick'&&f.attack<=9&&f.attack>=4;
 if(f.attack>0&&!f.attackHit&&(punchWindow||kickWindow)&&other.invul===0&&other.hp>0){
@@ -32,7 +54,7 @@ if(f.attack>0&&!f.attackHit&&(punchWindow||kickWindow)&&other.invul===0&&other.h
  const dx=f.face*((other.x+other.w/2)-(f.x+f.w/2));
  const verticalGap=Math.abs((other.y+other.h*.52)-(f.y+f.h*.52));
  if(dx>=-12&&dx<=reach&&verticalGap<76){
-  const damage=f.attackKind==='kick'?11:7;
+  const damage=f.attackKind==='kick'?(f.kickPower||11):(f.punchPower||7);
   f.attackHit=true;
   other.hp=Math.max(0,other.hp-damage);
   other.flash=9;other.hitstun=7;other.hitDirection=f.face;
@@ -45,14 +67,35 @@ if(f.attack>0&&!f.attackHit&&(punchWindow||kickWindow)&&other.invul===0&&other.h
   if(window.AbilityFX)AbilityFX.play('hit',other);
  }
 }
+// Toji's forward Heavenly Restriction dash hits once; defensive dashes still evade Blue.
+if(f.name==='Toji' && f.invul>0 && !f.dashHit && other.invul===0 && other.hp>0){
+ const heading=f.dashDirection||f.face;
+ const distance=heading*((other.x+other.w/2)-(f.x+f.w/2));
+ const heightGap=Math.abs((other.y+other.h*.50)-(f.y+f.h*.50));
+ if(distance>=-24 && distance<75 && heightGap<89){
+  const damage=23+5*(f.specialPower||0);
+  f.dashHit=true;other.hp=Math.max(0,other.hp-damage);
+  other.hitstun=10;other.hitDirection=heading;other.flash=12;
+  other.attack=0;other.attackKind='';
+  other.hitNumber=damage;other.hitNumberTick=31;
+  f.hitSpark=13;f.hitSparkX=other.x+other.w/2;
+  f.hitSparkY=other.y+other.h*.5;f.hitSparkColor='#c180ff';
+  if(window.AbilityFX) AbilityFX.play('hit',other);
+ }
+}
 if((f.blue>0||blueActiveMs>0)&&other.invul===0&&other.hp>0){
  const target=f.x+f.w/2+f.face*105, delta=target-(other.x+other.w/2);
  if(Math.abs(delta)<BLUE_PULL_RANGE){
   if(f.blue>0){other.x+=Math.sign(delta)*Math.min(7,Math.abs(delta));other.vy-=.22;}
   f.blueExposureMs+=blueActiveMs;
   if(f.blueExposureMs>=BLUE_DRAIN_INTERVAL_MS){
-   const damage=Math.floor(f.blueExposureMs/BLUE_DRAIN_INTERVAL_MS);
+   const ticks=Math.floor(f.blueExposureMs/BLUE_DRAIN_INTERVAL_MS);
    f.blueExposureMs%=BLUE_DRAIN_INTERVAL_MS;
+   let damage=0;
+   for(let i=0;i<ticks;i++){
+     f.blueTicks=(f.blueTicks||0)+1;
+     damage+=1+(f.blueTicks%5===0?(f.specialPower||0):0);
+   }
    const before=other.hp;other.hp=Math.max(1,other.hp-damage);
    const dealt=before-other.hp;
    if(dealt>0){f.blueDamageDealt+=dealt;other.blueHitPulse=12;other.flash=Math.max(other.flash,3);}
@@ -154,5 +197,18 @@ function drawF(f){ if(window.SpriteAnimations && SpriteAnimations.draw(ctx,f,fra
  ctx.restore();
 }
 
-function draw(){let bg=ctx.createLinearGradient(0,0,0,540);bg.addColorStop(0,'#17112d');bg.addColorStop(1,'#5a3b68');ctx.fillStyle=bg;ctx.fillRect(0,0,960,540);for(let i=0;i<12;i++){rect(i*90,230+(i%3)*22,65,220,'#27223f');rect(i*90+14,260+(i%3)*22,15,50,'#473c5c')}rect(0,floor,960,90,'#3d3449');rect(0,floor,960,7,'#9a7a99');for(let i=0;i<960;i+=48)rect(i,floor+32,30,3,'#51455c');if(fighters.length){if(window.AbilityFX)fighters.forEach(f=>AbilityFX.drawBehind(ctx,f,frame,fighters[1-f.side]));fighters.forEach(drawF);fighters.forEach(f=>{if(f.hitNumberTick>0){ctx.save();ctx.font='bold 20px monospace';ctx.textAlign='center';ctx.fillStyle='#ffdb86';ctx.fillText('-'+f.hitNumber,f.x+f.w/2,f.y-28-(29-f.hitNumberTick)*.6);ctx.restore();}if(f.blueHitPulse>0){ctx.font='bold 16px monospace';ctx.fillStyle='#a8edff';ctx.textAlign='center';ctx.fillText('BLUE -1',f.x+f.w/2,f.y-27);}});if(window.AbilityFX)fighters.forEach(f=>AbilityFX.drawFront(ctx,f,frame));fighters.forEach((f,i)=>{let x=i===0?35:545;rect(x,28,380,31,'#0a0a16');rect(x+4,32,372*(f.hp/100),23,i===0?'#55caff':'#d878b7');ctx.fillStyle='white';ctx.font='bold 15px monospace';ctx.textAlign='right';ctx.fillText(Math.ceil(f.hp)+' HP',x+367,50);ctx.font='bold 23px monospace';ctx.textAlign=i===0?'left':'right';ctx.fillText(f.name,i===0?35:925,87);ctx.font='16px monospace';ctx.fillText(f.name==='Gojo'&&f.blue>0?'BLUE '+(f.blue/60).toFixed(1)+'s  -'+f.blueDamageDealt+' HP':f.specialCool?'SPECIAL: '+Math.ceil(f.specialCool/60)+'s':'SPECIAL READY',i===0?35:925,111);});}else{ctx.fillStyle='white';ctx.font='bold 40px monospace';ctx.textAlign='center';ctx.fillText('GOJO VS TOJI',480,210);ctx.font='22px monospace';ctx.fillText('Choose your fighters above!',480,260)}particles=particles.filter(p=>p.life-->0);for(let p of particles){p.x+=p.vx;p.y+=p.vy;rect(p.x,p.y,5,5,p.color)}}function loop(){frame++;if(playing){updateF(fighters[0],fighters[1],{left:'arrowleft',right:'arrowright',jump:'arrowup',jumpAlt:' ',punch:'f',kick:'d',special:'a'},false);updateF(fighters[1],fighters[0],{left:'j',right:'l',jump:'i',punch:'n',kick:'m',special:'o'},mode.value==='cpu');if(fighters.some(f=>f.hp<=0)){playing=false;document.getElementById('status').textContent=fighters[0].hp<=0&&fighters[1].hp<=0?'Draw!':fighters.find(f=>f.hp>0).name+' wins! Press Start fight to play again.';}}draw();requestAnimationFrame(loop)}loop();
+function draw(){let bg=ctx.createLinearGradient(0,0,0,540);bg.addColorStop(0,'#17112d');bg.addColorStop(1,'#5a3b68');ctx.fillStyle=bg;ctx.fillRect(0,0,960,540);for(let i=0;i<12;i++){rect(i*90,230+(i%3)*22,65,220,'#27223f');rect(i*90+14,260+(i%3)*22,15,50,'#473c5c')}rect(0,floor,960,90,'#3d3449');rect(0,floor,960,7,'#9a7a99');for(let i=0;i<960;i+=48)rect(i,floor+32,30,3,'#51455c');if(fighters.length){if(window.AbilityFX)fighters.forEach(f=>AbilityFX.drawBehind(ctx,f,frame,fighters[1-f.side]));fighters.forEach(drawF);
+fighters.forEach(f=>{if(f.hitSpark>0){
+ctx.save();ctx.globalAlpha=Math.min(1,f.hitSpark/8);ctx.strokeStyle=f.hitSparkColor||'#ffdc8a';
+ctx.lineWidth=4;const x=f.hitSparkX,y=f.hitSparkY;
+for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();
+ctx.moveTo(x+Math.cos(a)*8,y+Math.sin(a)*8);
+ctx.lineTo(x+Math.cos(a)*(18+f.hitSpark),y+Math.sin(a)*(18+f.hitSpark));ctx.stroke();}
+ctx.restore();}});
+fighters.forEach(f=>{if(f.hitNumberTick>0){ctx.save();ctx.font='bold 20px monospace';ctx.textAlign='center';ctx.fillStyle='#ffdb86';ctx.fillText('-'+f.hitNumber,f.x+f.w/2,f.y-28-(29-f.hitNumberTick)*.6);ctx.restore();}if(f.blueHitPulse>0){ctx.font='bold 16px monospace';ctx.fillStyle='#a8edff';ctx.textAlign='center';ctx.fillText('BLUE -1',f.x+f.w/2,f.y-27);}});if(window.AbilityFX)fighters.forEach(f=>AbilityFX.drawFront(ctx,f,frame));fighters.forEach((f,i)=>{let x=i===0?35:545;rect(x,28,380,31,'#0a0a16');rect(x+4,32,372*(f.hp/(f.maxHp||100)),23,i===0?'#55caff':'#d878b7');ctx.fillStyle='white';ctx.font='bold 15px monospace';ctx.textAlign='right';ctx.fillText(Math.ceil(f.hp)+' HP',x+367,50);ctx.font='bold 23px monospace';ctx.textAlign=i===0?'left':'right';ctx.fillText(f.name,i===0?35:925,87);ctx.font='16px monospace';ctx.fillText(f.name==='Gojo'&&f.blue>0?'BLUE '+(f.blue/60).toFixed(1)+'s  -'+f.blueDamageDealt+' HP':f.specialCool?'SPECIAL: '+Math.ceil(f.specialCool/60)+'s':'SPECIAL READY',i===0?35:925,111);});}else{ctx.fillStyle='white';ctx.font='bold 40px monospace';ctx.textAlign='center';ctx.fillText('GOJO VS TOJI',480,210);ctx.font='22px monospace';ctx.fillText('Choose your fighters above!',480,260)}particles=particles.filter(p=>p.life-->0);for(let p of particles){p.x+=p.vx;p.y+=p.vy;rect(p.x,p.y,5,5,p.color)}}function loop(){frame++;if(playing&&!shopOpen){updateF(fighters[0],fighters[1],{left:'arrowleft',right:'arrowright',jump:'arrowup',jumpAlt:' ',punch:'f',kick:'d',special:'a'},false);updateF(fighters[1],fighters[0],{left:'j',right:'l',jump:'i',punch:'n',kick:'m',special:'o'},mode.value==='cpu');if(fighters.some(f=>f.hp<=0)){playing=false;
+const winner=fighters.find(f=>f.hp>0);
+const reward=winner?.side===0&&mode.value==='cpu'&&window.UpgradeShop?35:0;
+if(reward)UpgradeShop.award(reward);
+document.getElementById('status').textContent=
+ !winner?'Draw!':winner.name+' wins!'+(reward?' 🪙 +'+reward+' coins':'')+' Press Start fight to play again.';}}draw();requestAnimationFrame(loop)}loop();
 </script></body></html>
