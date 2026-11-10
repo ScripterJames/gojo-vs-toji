@@ -4,6 +4,7 @@ on:
     branches: [hakone-strongest-onsen]
     paths:
       - 'docs/patches/strongest-*.b64'
+      - 'docs/patches/icon-fixes.json'
       - '.github/workflows/hakone-strongest-candidate.yml'
 permissions:
   contents: write
@@ -54,6 +55,16 @@ jobs:
               path.parent.mkdir(parents=True, exist_ok=True)
               path.write_bytes(content)
               print('Verified', path, change['after'])
+          fixes = json.loads(Path('docs/patches/icon-fixes.json').read_text())
+          assert {fix['path'] for fix in fixes} == {'adventure/shop_art.js','adventure/food_art.js','tests/test_hakone_food_art.py'}
+          for fix in fixes:
+              path=Path(fix['path']); source=path.read_bytes()
+              assert blob(source)==fix['before'], str(path)
+              text=source.decode('utf-8'); assert text.count(fix['old'])==1
+              result=text.replace(fix['old'],fix['new']).encode('utf-8')
+              assert blob(result)==fix['after'], str(path)
+              path.write_bytes(result)
+              print('Verified shared-cache correction',path,fix['after'])
           PY
           git diff --check
           git diff --exit-code 4e134b10f17e0ed7a8ecb2526b7b94d947ae6dce -- index.html preview/
@@ -91,6 +102,7 @@ jobs:
           for name,n in counts: report+='- test_'+name+'.py: '+str(n)+' passing assertions.\n'
           report+='Total: '+str(sum(n for _,n in counts))+' assertions.\n'
           report+='The origin, shop, interactions, travelers and onsen suites ran on actual localhost HTTP with native storage and real iframes. Other suites declare source-loaded or clock/Storage fixtures. These are automated tests, not full human matches or a public-site playthrough. Publication and Pages success must still be verified separately.\n'
+          report+='The first candidate caught a real food-layer cache integration defect: three replacement icons bypassed the shared cache. The renderer now registers its three cached images in the shared icon bank, preserving the original 28-icon assertion and adding two cache regression checks.\n'
           path=Path('docs/HAKONE_STRONGEST_ONSEN.md');path.write_text(path.read_text()+report)
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as output: output.write(report)
           PY
