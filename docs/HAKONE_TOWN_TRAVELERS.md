@@ -71,10 +71,34 @@ mobile chooser layout and no JS exceptions. The gallery and town screenshots
 were visually inspected. The localhost navigation attempt was blocked by this
 runtime (ERR_BLOCKED_BY_ADMINISTRATOR), not a game exception.
 The suite defaults to real localhost + native storage in GitHub Actions, where
-it additionally tests the actual arena iframe and return path. Full six-suite
-branch CI and Pages deployment are still pending at this candidate checkpoint.
-Do not call it live until both are verified. Counts are automated assertions,
-not full human playthroughs or proof of perfect combat balance.
+it additionally tests the actual arena iframe and return path.
+
+## Complete branch validation — PASS, November 9, 2026, 5:56 PM Pacific
+Exact source commit 39db0658093a8fe049ac3e7db8091baab4428c41 passed
+GitHub Actions run 42739025022, job 129575215741:
+https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42739025022
+All six suites passed, confirmed in job logs:
+- 42 town checks (source-loaded with explicit storage/position test fixtures).
+- 84 arena checks (source-loaded, controlled combat clock and storage fixtures).
+- 21 native-localhost-origin integration checks, with actual iframe and PNG loads.
+- 19 native-localhost-origin shop preparation/art checks.
+- 34 native-localhost-origin interaction checks, including 154 object routes and
+  the preexisting 462 grounded arena sprite frames.
+- 40 NEW native-localhost-origin traveler checks. These confirm actual keyboard
+  direction changes, all 384 town frames grounded and nonempty, four visibly
+  different directions for every traveler, 16 distinct front sprites, cache and
+  walk cycles, all 16 choices through real UI handlers, free selection preserving
+  bag/position/coins, native reload persistence, C/portrait menu, focus restoration,
+  nonmutating scenery, animated water, real arena handoff and return, mobile fit,
+  and no JavaScript exceptions.
+Total: 240 automated assertions, not 240 full human playthroughs. The native-origin
+suites use a locally served HTTP origin, not the public GitHub Pages site. Combat
+balance and every real device/browser are not proven by these assertions.
+All four uploaded runtime/test blobs match the locally tested bytes. The change
+comparison contains only adventure/, tests/, this document and the CI workflow;
+root index.html, preview/, arena combat, save keys and shop geometry are unchanged.
+This documentation-only follow-up changes none of the tested runtime/test files.
+Publication still requires a fresh main-head check and separate Pages verification.
 
 ## Future work
 Read fresh main and this document before scheduled edits. Do not replace the new
