@@ -275,13 +275,23 @@
     const clear=()=>delete keys[btn.dataset.move];btn.onpointerdown=e=>{e.preventDefault();btn.setPointerCapture(e.pointerId);route=null;chosen=null;hovered=null;keys[btn.dataset.move]=true;};btn.onpointerup=clear;btn.onpointercancel=clear;
   }
   let camera={x:0,y:0};
+  function walkTo(p){
+    route=null;chosen=null;hovered=null;
+    if(blocked(p.x,p.y)){notify('That spot is blocked. Tap an open part of the path.');return false;}
+    const goal={x:p.x,y:p.y,w:1,h:1,anchor:{x:p.x,y:p.y}};
+    const path=I.plan(state,goal,blocked,state.room?640:D.width,state.room?480:D.height);
+    const last=path?.at(-1)||state;
+    if(!path||!I.line(last,p,blocked)){notify('No clear path to that spot. Try a closer open area.');return false;}
+    route={id:null,scene:state.room||'outdoors',points:[...path,{x:p.x,y:p.y}],destination:{x:p.x,y:p.y}};
+    keys={};canvas.focus({preventScroll:true});return true;
+  }
   function pointerPosition(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*canvas.width/r.width+camera.x,y:(e.clientY-r.top)*canvas.height/r.height+camera.y};}
   canvas.addEventListener('pointermove',e=>{if(e.pointerType==='touch'||route)return;const p=pointerPosition(e);hovered=I.pick(objects(),p.x,p.y)?.id||null;});
   canvas.addEventListener('pointerleave',()=>hovered=null);
   canvas.addEventListener('pointerdown',e=>{
     if(mode!=='town'||$('panel').open)return;
     const p=pointerPosition(e),o=I.pick(objects(),p.x,p.y);canvas.focus({preventScroll:true});
-    if(o){e.preventDefault();chosen=o.id;interact(o);}else{route=null;chosen=null;hovered=null;}
+    if(o){e.preventDefault();chosen=o.id;interact(o);}else{e.preventDefault();walkTo(p);}
   });
   function update(dt){
     if(mode!=='town'||$('panel').open||document.hidden)return;
@@ -290,15 +300,15 @@
     if(route){
       if(route.scene!==(state.room||'outdoors'))route=null;
       else{
-        const target=objects().find(o=>o.id===route.id);
-        if(!target){route=null;}
-        else if(I.target(target,state,blocked)){
+        const target=route.id&&objects().find(o=>o.id===route.id);
+        if(!target&&!route.destination){route=null;}
+        else if(target&&I.target(target,state,blocked)){
           route=null;activate(target);return;
         }else{
           while(route.points.length&&Math.hypot(route.points[0].x-state.x,route.points[0].y-state.y)<2){
             const p=route.points.shift();state.x=p.x;state.y=p.y;
           }
-          if(!route.points.length){route=null;if(I.target(target,state,blocked)){activate(target);return;}notify('Move a little closer, then press E.');}
+          if(!route.points.length){route=null;if(target){if(I.target(target,state,blocked)){activate(target);return;}notify('Move a little closer, then press E.');}}
           else{dx=route.points[0].x-state.x;dy=route.points[0].y-state.y;}
         }
       }
@@ -330,7 +340,7 @@
     $('cycleButton').hidden=options.length<2||!!route;
     $('interactButton').disabled=!nearby||!!route;
     $('interactButton').title=nearby?'Interact with '+nearby.name:'Walk closer, or click an object to approach it';
-    $('prompt').textContent=target?'Walking to '+target.name+' · move to cancel':nearby?'E — '+nearby.name+(options.length>1?' · Q changes target':''):'Click a place to walk over · E interacts · B opens bag';
+    $('prompt').textContent=route?(target?'Walking to '+target.name:'Walking to selected spot')+' · move to cancel':nearby?'E — '+nearby.name+(options.length>1?' · Q changes target':''):'Tap open ground to walk · tap an object to use it · E interacts';
   }
   let previous=performance.now();
   function frame(now){const dt=Math.min(.04,(now-previous)/1000);previous=now;update(dt);draw();if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)$('notice').textContent='';}requestAnimationFrame(frame)}

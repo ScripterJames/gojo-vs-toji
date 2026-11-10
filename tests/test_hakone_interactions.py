@@ -93,6 +93,25 @@ try:
     close();enter('seven');click_object('freshFridge');page.keyboard.press('ArrowLeft')
     check('Manual movement cancels auto-walk',page.evaluate('HakoneLife.route()===null'))
     check('Unknown objects cannot trigger an interaction',page.evaluate("HakoneLife.interact({id:'not-a-real-object'})===false && !document.getElementById('panel').open"))
+    # Empty-ground taps must actually move (the UI previously advertised this
+    # but only object clicks worked), without opening menus or crossing furniture.
+    enter('seven')
+    ground=page.evaluate('''()=>{const s=HakoneLife.snapshot(),r=document.getElementById('world').getBoundingClientRect();const camY=Math.round(Math.max(0,480-400) && Math.max(0,Math.min(80,s.y-220)));return {x:r.x+405*r.width/640,y:r.y+(410-camY)*r.height/400}}''')
+    check('Open-ground destination is walkable',not page.evaluate('HakoneLife.blocked(405,410)'))
+    page.mouse.click(ground['x'],ground['y'])
+    check('Ground click starts walking to requested spot',page.evaluate('''()=>{const r=HakoneLife.route();return !!r&&!!r.destination&&Math.abs(r.destination.x-405)<1&&Math.abs(r.destination.y-410)<1;}'''))
+    page.wait_for_function('''()=>{const s=HakoneLife.snapshot();return Math.hypot(s.x-405,s.y-410)<2 && HakoneLife.route()===null;}''',timeout=6000)
+    check('Ground walk arrives without remotely interacting',not page.locator('#panel').evaluate('(d)=>d.open'))
+    # The touch path uses the same actual PointerEvent handler as a finger tap.
+    page.evaluate('''()=>{const c=document.getElementById('world'),r=c.getBoundingClientRect();c.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'touch',isPrimary:true,clientX:r.x+350*r.width/640,clientY:r.y+(410-Math.max(0,Math.min(80,HakoneLife.snapshot().y-220)))*r.height/400}));}''')
+    page.wait_for_function('''()=>{const s=HakoneLife.snapshot();return Math.hypot(s.x-350,s.y-410)<2 && HakoneLife.route()===null;}''',timeout=6000)
+    check('Touch pointer walks to empty floor',not page.locator('#panel').evaluate('(d)=>d.open'))
+    # A blocked destination must neither teleport nor start a fake route.
+    page.evaluate('''()=>{const c=document.getElementById('world'),r=c.getBoundingClientRect();c.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'touch',isPrimary:true,clientX:r.x+259*r.width/640,clientY:r.y+(230-Math.max(0,Math.min(80,HakoneLife.snapshot().y-220)))*r.height/400}));}''')
+    check('Blocked floor tap does not start a route',page.evaluate('HakoneLife.route()===null'))
+    enter('seven');page.evaluate('''()=>{const c=document.getElementById('world'),r=c.getBoundingClientRect();c.dispatchEvent(new PointerEvent('pointerdown',{bubbles:true,pointerType:'touch',isPrimary:true,clientX:r.x+400*r.width/640,clientY:r.y+(410-Math.max(0,Math.min(80,HakoneLife.snapshot().y-220)))*r.height/400}));}''')
+    page.keyboard.press('ArrowLeft')
+    check('Keyboard movement cancels floor walking',page.evaluate('HakoneLife.route()===null'))
     enter('seven');interact('freshFridge')
     row=page.locator('.item').filter(has=page.locator('strong',has_text='Salmon onigiri'))
     money=snap()['coins'];row.get_by_role('button',name='Buy',exact=True).click()

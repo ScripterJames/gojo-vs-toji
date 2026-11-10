@@ -235,3 +235,17 @@ A subsequent documentation-triggered workflow run on SHA 93487f55 failed the **p
 - GitHub Actions [run 42632918057](https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42632918057) **passed** on exact branch commit `c6353ba5242bf1007ff23665ea952b5be1888872` after the new CPU AI changes and tests. Parsed job logs confirm **42 town Chromium checks, 84 arena Chromium checks (66 existing plus 18 new deterministic CPU-special checks), and 21 real-localhost-origin Chromium integration checks**.
 - The 18 new arena checks verify Gojo CPU casts Blue, Toji CPU offensive direction/hit and defensive direction, and one AI special activation per remaining 14 fighters. All passed on actual Chromium; this does **not** establish difficulty fairness or public-origin persistence.
 - The tested game changes were fast-forwarded to `main` with a checked expected branch head. Pages deployment for that commit is checked separately; do not conflate the regression success with CDN publication.
+
+## November 9, 2026, evening stabilization — tap-to-walk on empty ground
+
+### Concrete defect corrected
+The town HUD said “Click a place to walk over,” but a tap/click on empty walkable ground merely cancelled navigation. Only tapping objects actually moved the traveler. This was especially awkward on touchscreen devices. Existing object click-to-approach was already working and was preserved.
+
+Added a bounded empty-ground destination mode to `adventure/town.js`: click/tap a free floor or path tile and the character pathfinds to the exact selected coordinate using the existing collision-aware route planner. Blocked destinations display an explanation without teleporting or walking through furniture. The walking prompt identifies selected-ground movement; keyboard/D-pad movement still cancels automatic walking. Tapping objects continues to navigate to and activate the intended object; this change does not make scenery remotely interactive. Updated the on-page help wording. No new saves, objects, prices, combat behavior or special permissions.
+
+### Tests and limitations
+- Local real Chromium with `HAKONE_TEST_MODE=inline` passed 40 interaction checks (previously 34), including empty-floor click arrival, synthetic touch PointerEvent arrival, blocked-area rejection, movement cancellation, object selection and the original 154 object access paths. The inline harness uses an explicitly mocked Storage object and is **not** a native public-browser persistence test.
+- Existing local source-loaded Chromium suites also passed: 42 town checks, 84 arena checks and 38 traveler checks (inline traveler mode), with their documented test doubles. JavaScript syntax and Python compile checks passed.
+- The new regression runs under a **real localhost HTTP origin with native localStorage in GitHub Actions**; branch CI must pass before main is updated. The pointer test dispatches browser PointerEvents and does not establish physical iOS/Android hardware gesture behavior. Previously tested native-origin integration remains in the CI workflow.
+- GitHub Pages deployment for earlier main SHA `0adc1fa9919110a9e863baea12cbf221dd60f0dc` completed successfully in run 42739571878. The public GitHub Pages URL cannot be opened by the available research browser, so no public-origin interaction is claimed.
+- Next priorities: inspect the new branch CI results; publish only if passing and main remains the expected parent; verify the new Pages workflow. Then prioritize any concrete user-reported defects and cross-device touch validation over speculative features.
