@@ -78,7 +78,7 @@ try:
 
         start_x = page.evaluate("HakoneLife.snapshot().x")
         page.keyboard.down("ArrowRight")
-        page.wait_for_timeout(240)
+        page.wait_for_function('(x)=>HakoneLife.snapshot().x>x+5',arg=start_x,timeout=10000)
         page.keyboard.up("ArrowRight")
         check("Real keyboard town movement",
               page.evaluate("HakoneLife.snapshot().x") > start_x + 5)

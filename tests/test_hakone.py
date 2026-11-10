@@ -1,7 +1,8 @@
 """Hakone Life regression checks.
 Run from a repository checkout: python tests/test_hakone.py
 Requires Python playwright and Chromium (CHROMIUM_EXECUTABLE may override path).
-This suite loads candidate files into real Chromium via page.set_content and
+This suite loads candidate files into real Chromium via page.set_content,
+uses an explicit source-injected position fixture for object handlers, and
 uses an explicit Storage test double. It does NOT claim to test the remote
 legacy arena or real-origin browser persistence. A separate blocked-storage
 case exercises graceful degradation. Reports go to a temporary directory.
@@ -18,8 +19,14 @@ ROOT=Path(__file__).resolve().parents[1]
 A=ROOT/'adventure'
 OUT=Path(tempfile.mkdtemp(prefix='hakone-test-'))
 base=(A/'index.html').read_text()
-for name in ['data','art','town']:
-    base=re.sub(rf'<script src="{name}\.js\?v=[^"]+"></script>',lambda _:'<script>'+(A/f'{name}.js').read_text()+'</script>',base)
+for name in ['data','art','shop_art','interiors','interaction','town']:
+    source=(A/f'{name}.js').read_text()
+    if name=='town':
+        # Source-level fixture only: move to an approach point without spending
+        # minutes walking every object. This hook is NOT shipped in town.js.
+        source=source.replace('window.HakoneLife={',
+            'window.__testPlace=(x,y)=>{state.x=x;state.y=y;route=null;chosen=null;hovered=null;};window.HakoneLife={')
+    base=re.sub(rf'<script src="{name}\.js\?v=[^"]+"></script>',lambda _:'<script>'+source+'</script>',base)
 COINS='gojo-vs-toji-arcade-coins-v1'
 LEVELS='gojo-vs-toji-upgrade-levels-v1'
 results=[]
@@ -44,7 +51,13 @@ with sync_playwright() as p:
         return page,errs
     page,errors=load()
     snap=lambda: page.evaluate('HakoneLife.snapshot()')
-    interact=lambda id: page.evaluate('(id)=>HakoneLife.interact(HakoneLife.objects().find(o=>o.id===id))',id)
+    def interact(id):
+        return page.evaluate('''id=>{
+            const o=HakoneLife.objects().find(o=>o.id===id);
+            const p=HakoneInteraction.access(o,HakoneLife.blocked)[0];
+            if(!p)throw Error('No access point: '+id);
+            window.__testPlace(p.x,p.y);return HakoneLife.interact(o);
+        }''',id)
     def close():
         if page.locator('#panel').evaluate('(x)=>x.open'):
             page.locator('#panelClose').click()
@@ -119,15 +132,15 @@ with sync_playwright() as p:
     check('Leave fight returns to town',snap()['mode']=='town' and page.locator('#arenaFrame').get_attribute('src')=='about:blank')
     for room in [None]+list(page.evaluate('Object.keys(HakoneData.shops)')):
         if room is None:
-            page.evaluate("HakoneLife.enter('seven');HakoneLife.interact(HakoneLife.objects().find(o=>o.id==='exit'))")
+            page.evaluate("HakoneLife.enter('seven')");interact('exit')
         else:
             page.evaluate('(id)=>HakoneLife.enter(id)',room)
         for obj in page.evaluate('HakoneLife.objects()'):
             if obj['type'] in ['building','exit']:continue
-            page.evaluate('(o)=>HakoneLife.interact(o)',obj);close()
-    check('All object interaction handlers run',not errors,errors)
-    page.evaluate("HakoneLife.enter('seven');HakoneLife.interact(HakoneLife.objects().find(o=>o.id==='exit'))")
-    unreachable=page.evaluate('''()=>{const q=[[200,272]],seen=new Set(['200,272']);for(let at=0;at<q.length;at++){const [x,y]=q[at];for(const [dx,dy] of [[8,0],[-8,0],[0,8],[0,-8]]){const nx=x+dx,ny=y+dy,k=nx+','+ny;if(!seen.has(k)&&!HakoneLife.blocked(nx,ny)){seen.add(k);q.push([nx,ny]);}}}return HakoneLife.objects().filter(o=>!q.some(([x,y])=>Math.hypot(x-o.anchor.x,y-o.anchor.y)<47)).map(o=>o.id)}''')
+            interact(obj['id']);close()
+    check('All object handlers run from valid fixture approach points',not errors,errors)
+    page.evaluate("HakoneLife.enter('seven')");interact('exit')
+    unreachable=page.evaluate('''()=>{const q=[[200,272]],seen=new Set(['200,272']);for(let at=0;at<q.length;at++){const [x,y]=q[at];for(const [dx,dy] of [[8,0],[-8,0],[0,8],[0,-8]]){const nx=x+dx,ny=y+dy,k=nx+','+ny;if(!seen.has(k)&&!HakoneLife.blocked(nx,ny)){seen.add(k);q.push([nx,ny]);}}}return HakoneLife.objects().filter(o=>!q.some(([x,y])=>x>o.x-64&&x<o.x+o.w+64&&y>o.y-64&&y<o.y+o.h+64&&HakoneInteraction.target(o,{x,y},HakoneLife.blocked))).map(o=>o.id)}''')
     check('Every outdoor object can be approached',not unreachable,unreachable)
     db['hakone-life-town-v1']=json.dumps({'x':152,'y':224,'fighter':'Gojo'})
     door,door_errors=load(db);door.keyboard.press('e')

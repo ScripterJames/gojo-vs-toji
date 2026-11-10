@@ -71,9 +71,11 @@ window.HakoneData = (() => {
     ['lamp3','lamp','Street lantern',1218,242,13,45]
   ].map(([id,type,name,x,y,w,h])=>({id,type,name,x,y,w,h,solid:!['bridge','npc','cat'].includes(type)}));
   for(let i=0;i<18;i++){
-    const x=i<9?48+i*144:48+(i-9)*144;
+    let x=i<9?48+i*144:48+(i-9)*144;
+    // Keep the two river-column trees on the east bank so they can be approached.
+    if(x>560&&x<684)x=696;
     const y=i<9?34:724;
-    props.push({id:'tree'+i,type:'tree',name:i%3?'Cedar tree':'Maple tree',x,y,w:32,h:44,solid:true});
+    props.push({id:'tree'+i,type:'tree',name:i%3?'Cedar tree':'Maple tree',x,y,w:32,h:44,solid:true,collision:{x:x+12,y:y+27,w:10,h:17}});
   }
   for(const [i,x,y] of [[0,512,351],[1,704,358],[2,256,586],[3,952,594]]) props.push({id:'rock'+i,type:'rock',name:'River stone',x,y,w:25,h:18,solid:true});
   const sources = [
@@ -87,7 +89,10 @@ window.HakoneData = (() => {
     ['SLYNYRD: top-down pixel-art tiles','https://www.slynyrd.com/blog/2019/8/27/pixelblog-20-top-down-tiles'],
     ['SLYNYRD: objects and shadows','https://www.slynyrd.com/blog/2019/9/18/pixelblog-21-top-down-objects'],
     ['SLYNYRD: interiors','https://www.slynyrd.com/blog/2021/11/30/pixelblog-35-top-down-interiors'],
-    ['SLYNYRD: character animation','https://www.slynyrd.com/blog/2025/3/24/pixelblog-55-top-down-character-animation']
+    ['SLYNYRD: character animation','https://www.slynyrd.com/blog/2025/3/24/pixelblog-55-top-down-character-animation'],
+    ['SLYNYRD: anime faces and hair (reference only)','https://www.slynyrd.com/blog/2020/7/28/pixelblog-29-anime-faces-and-hair'],
+    ['SLYNYRD: grounded fighting stance (reference only)','https://www.slynyrd.com/blog/2024/9/26/pixelblog-52-idle-fighting-stance'],
+    ['SLYNYRD: punches and kicks (reference only)','https://www.slynyrd.com/blog/2024/11/25/pixelblog-53-punches-and-kicks']
   ];
   return {items,shops,buildings,props,sources,width:1280,height:800};
 })();
