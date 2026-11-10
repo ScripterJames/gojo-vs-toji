@@ -2,13 +2,10 @@ name: Hakone browser regression
 
 on:
   push:
-    branches: [main, hakone-town-expansion, hakone-shop-polish]
+    branches: [main, hakone-town-expansion, hakone-shop-polish, grounded-fighters-lived-in-shops]
     paths:
       - "adventure/**"
-      - "tests/test_hakone.py"
-      - "tests/test_hakone_arena.py"
-      - "tests/test_hakone_origin.py"
-      - "tests/test_hakone_shop_art.py"
+      - "tests/test_hakone*.py"
       - ".github/workflows/hakone-browser-tests.yml"
   workflow_dispatch:
 
@@ -38,3 +35,5 @@ jobs:
         run: python tests/test_hakone_origin.py
       - name: Test shop art and preparation at a real origin
         run: python tests/test_hakone_shop_art.py
+      - name: Test every object and grounded fighter frame
+        run: python tests/test_hakone_furnishings.py

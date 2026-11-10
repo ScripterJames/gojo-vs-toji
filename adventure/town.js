@@ -1,19 +1,20 @@
 /* Hakone Life: a separate, peaceful town mode. Legacy arena/upgrade saves stay compatible. */
 (() => {
   'use strict';
-  const D=HakoneData,A=HakoneArt,$=id=>document.getElementById(id);
+  const D=HakoneData,A=HakoneArt,I=HakoneInteractions,$=id=>document.getElementById(id);
   const roster=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo','Jogo','Mahito'];
   const canvas=$('world'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const SAVE='hakone-life-town-v1',COINS='gojo-vs-toji-arcade-coins-v1',LEVELS='gojo-vs-toji-upgrade-levels-v1',GIFT='gojo-vs-toji-upgrade-starter-v1';
   const memoryStore={};
   let storageOK=true,noticeTimer=0,clock=0,mode='town',keys={},dialogAction=null,drillStep=0,lastSave=0;
+  let targetId=null,restSeat=null,lastInteraction=null;
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
   function read(k){if(!storageOK)return memoryStore[k]??null;try{const v=localStorage.getItem(k);memoryStore[k]=v;return v}catch(_){storageOK=false;return memoryStore[k]??null}}
   function write(k,v){memoryStore[k]=v;if(!storageOK)return false;try{localStorage.setItem(k,v);return true}catch(_){storageOK=false;return false}}
   let saved={};try{saved=JSON.parse(read(SAVE)||'{}')||{}}catch(_){}
   const state={x:clamp(num(saved.x,200),20,1260),y:clamp(num(saved.y,270),55,780),room:D.shops[saved.room]?saved.room:null,
     returnPoint:saved.returnPoint&&Number.isFinite(saved.returnPoint.x)&&Number.isFinite(saved.returnPoint.y)?saved.returnPoint:{x:200,y:270},
-    fighter:roster.includes(saved.fighter)?saved.fighter:'Gojo',dir:'down',step:0,
+    fighter:roster.includes(saved.fighter)?saved.fighter:'Gojo',dir:['up','down','left','right'].includes(saved.dir)?saved.dir:'down',step:0,
     energy:clamp(num(saved.energy,85),0,100),fullness:clamp(num(saved.fullness,80),0,100),bag:{},
     trash:clamp(Math.floor(num(saved.trash)),0,999),stash:clamp(Math.floor(num(saved.stash)),0,999999),
     stamps:Array.isArray(saved.stamps)?[...new Set(saved.stamps.filter(x=>D.shops[x]))]:[],
@@ -41,7 +42,7 @@
     $('place').textContent=mode==='arena'?'Arena Battles':state.room?D.shops[state.room].name:'Hakone Life · Riverside district';
     $('fighter').textContent=state.fighter;$('weather').textContent=state.rain?'Weather: rain':'Weather: clear';
   }
-  function close(){if($('panel').open)$('panel').close();dialogAction=null;keys={};}
+  function close(){if($('panel').open)$('panel').close();dialogAction=null;keys={};if(mode==='town')canvas.focus({preventScroll:true});}
   function panel(title,desc,buttons=[]){
     dialogAction=null;$('panelTitle').textContent=title;$('panelDesc').textContent=desc;$('panelBody').replaceChildren();
     for(const b of buttons){const btn=document.createElement('button');btn.type='button';btn.textContent=b.label;btn.disabled=!!b.disabled;
@@ -99,25 +100,20 @@
   }
   const fighterMoves={Gojo:'Blue',Toji:'Heavenly Restriction',Hakari:'Jackpot',Sukuna:'Cleave',Megumi:'Divine Dog',Yuji:'Black Flash',Nobara:'Nail + Resonance',Maki:'Weapon Sweep',Toge:'Cursed Speech',Panda:'Guard Stomp',Nanami:'Ratio Strike',Yuta:'Rika Guard',Choso:'Piercing Blood',Todo:'Boogie Woogie',Jogo:'Volcanic Eruption',Mahito:'Idle Transfiguration'};
   function selectFighter(){panel('Choose your traveler','Sixteen playable fighters in Hakone Arena, each with a different special move. Your choice is saved for the next fight.',roster.map(name=>({label:name+' · '+fighterMoves[name],run:()=>{state.fighter=name;save();close();}})));}
-  function interior(id){
-    const o=(key,type,name,x,y,w=32,h=32,extra={})=>({id:key,type,name,x,y,w,h,solid:true,...extra});
-    const all=[o('exit','exit','Return to town',296,438,48,14,{solid:false}),o('window','sign','Window view',296,44,32,16),o('seat','seat','Take a seat',380,322,38,18)];
-    const s=D.shops[id];
-    if(s.stock.length){
-      const third=Math.ceil(s.stock.length/3);
-      for(let n=0;n<3;n++){const stock=id==='seven'?[['onigiri','salmon','egg','bento'],['chicken','bun','oden','melonpan'],['smoothieCup','cafeCup','umbrella']][n]:s.stock.slice(n*third,(n+1)*third);if(stock.length)all.push(o('shelf'+n,'shelf',id==='seven'?['Chilled foods','Hot food & bakery','Cups & supplies'][n]:'Browse '+s.name,84+n*176,100,104,38,{stock}));}
-      all.push(o('clerk','npc','Talk to the shopkeeper',311,190,18,30),o('table','table','Dining table',254,289,76,32));
-    }
-    if(id==='seven')all.push(o('microwave','microwave','Warm your bento',102,240,36,26),o('coffee','coffee','SEVEN CAFE machine',420,236,30,36),o('blender','blender','Smoothie machine',500,236,30,36),o('atm','atm','Game coin bank',60,335,30,40));
-    if(id==='dojo')all.push(o('dummy','dummy','Practice a combo',146,160,40,62),o('upgrades','board','Fighter upgrades',416,160,42,40),o('trainer','npc','Dojo trainer',311,246,18,30));
-    if(id==='onsen')all.push(o('bath','bath','Use the hot spring',176,132,288,100),o('host','npc','Bath attendant',152,282,18,30),o('towels','shelf','Towel shelf',448,282,80,36,{stock:['towel']}));
-    if(id==='inn')all.push(o('bed','bed','Rest at the ryokan',108,112,76,92),o('host','npc','Innkeeper',311,190,18,30),o('table','table','Tea table',420,200,70,34));
-    if(id==='station')all.push(o('map','board','Town travel map',112,120,48,46),o('host','npc','Station attendant',311,190,18,30),o('vendingInside','vending','Station drinks',480,180,26,46));
-    return all;
-  }
+  function interior(id){return HakoneInteriors.get(id);}
   function objects(){return state.room?interior(state.room):[...D.buildings,...D.props]}
   function anchor(o){return o.anchor||{x:o.x+o.w/2,y:o.y+o.h+5}}
-  function near(){let best=null,dist=48;for(const o of objects()){const p=anchor(o),d=Math.hypot(p.x-state.x,p.y-state.y);if(d<dist){best=o;dist=d;}}return best;}
+  function near(){return I.select(state,objects(),targetId)?.object||null;}
+  function cycleTarget(){
+    const choices=I.nearby(state,objects());if(!choices.length)return;
+    const current=near(),index=choices.findIndex(c=>c.object.id===current?.id);
+    targetId=choices[(index+1)%choices.length].object.id;canvas.focus({preventScroll:true});
+  }
+  function tryInteract(o=near()){
+    if(mode!=='town'||$('panel').open)return false;
+    if(!o||!I.canReach(state,o,objects())){notify(o?'Walk closer to '+o.name+'.':'Walk closer to a doorway, person or object.');return false;}
+    targetId=o.id;lastInteraction=o.id;interact(o);return true;
+  }
   function blocked(x,y){
     const maxX=state.room?608:1262,maxY=state.room?442:778,minX=state.room?36:18,minY=state.room?68:60;
     if(x<minX||x>maxX||y<minY||y>maxY)return true;
@@ -125,21 +121,21 @@
     return objects().some(o=>o.solid&&x+6>o.x&&x-6<o.x+o.w&&y>o.y&&y-7<o.y+o.h);
   }
   function enter(id){const b=D.buildings.find(x=>x.id===id);if(!b)return;
-    state.returnPoint={x:b.anchor.x,y:b.anchor.y+12};state.room=id;state.x=320;state.y=410;keys={};
+    state.returnPoint={x:b.anchor.x,y:b.anchor.y+12};state.room=id;state.x=320;state.y=410;keys={};targetId=null;restSeat=null;
     if(!state.stamps.includes(id)){state.stamps.push(id);if(state.stamps.length>=6&&!state.flags.stampPrize){state.flags.stampPrize=true;award(30);notify('Six town stamps collected! +30 coins.');}else notify('Town stamp collected: '+D.shops[id].name);}
     save();close();
   }
-  function leaveRoom(){state.room=null;state.x=state.returnPoint.x;state.y=state.returnPoint.y;state.dir='down';save();close();}
+  function leaveRoom(){state.room=null;state.x=state.returnPoint.x;state.y=state.returnPoint.y;state.dir='down';targetId=null;restSeat=null;save();close();}
   function restore(energy,fullness,cost=0,message='A peaceful break.'){
     if(!pay(cost)){notify('Not enough coins. Benches and the water tap are free.');return;}
     state.energy=clamp(state.energy+energy,0,100);state.fullness=clamp(state.fullness+fullness,0,100);save();close();sound('eat');notify(message);
   }
   function transform(from,to,title){
-    panel(title,D.items[from][5],[{label:'Prepare '+D.items[from][0],disabled:state.bag[from]<1||state.bag[to]>=99,run:()=>{if(state.bag[from]<1)return;state.bag[from]--;state.bag[to]++;save();sound('purchase');notify(D.items[to][0]+' is ready in your bag.');close();}}]);
+    panel(title,D.items[from][5],[{label:'Prepare '+D.items[from][0],disabled:state.bag[from]<1||state.bag[to]>=99,run:()=>{if(state.bag[from]<1||state.bag[to]>=99)return;state.bag[from]--;state.bag[to]++;save();sound('purchase');notify(D.items[to][0]+' is ready in your bag.');close();}}]);
   }
   function map(travel=false){
     panel(travel?'Town shuttle':'Hakone Life · Walking map','A fictional neighborhood, not a real map of Hakone. West: convenience store, restaurants and gifts. East: dojo, hot spring, inn and station. Cross the river on either wooden bridge.',
-      travel?[['Shopping street',200,270],['Dojo & onsen',834,267],['Station & inn',1050,550],['Riverside park',454,630]].map(([name,x,y])=>({label:'Travel to '+name+' · free',run:()=>{state.room=null;state.x=x;state.y=y;save();close();}})):[]);
+      travel?[['Shopping street',200,270],['Dojo & onsen',834,267],['Station & inn',1050,550],['Riverside park',454,630]].map(([name,x,y])=>({label:'Travel to '+name+' · free',run:()=>{state.room=null;state.x=x;state.y=y;targetId=null;restSeat=null;save();close();}})):[]);
     const p=document.createElement('p');p.textContent='Stamps: '+state.stamps.length+'/8. Visit six buildings for a one-time 30-coin bonus.';$('panelBody').append(p);
   }
   function drill(){
@@ -150,6 +146,13 @@
     sound();
     if(o.type==='building'){enter(o.id);return;}
     if(o.type==='exit'){leaveRoom();return;}
+    if(o.action==='checkout'){interact(objects().find(p=>p.id==='clerk'));return;}
+    if(o.action==='reception'){interact(objects().find(p=>p.id==='host'));return;}
+    if(o.action==='travel'){map(true);return;}
+    if(o.action==='tea'){panel(o.name,'Help yourself. This is a free game rest stop.',[{label:'Enjoy a cup · +12 energy',run:()=>restore(12,0,0,'You enjoy a quiet cup and feel refreshed.')}]);return;}
+    if(o.action==='wash'){panel(o.name,'Wash before entering the hot spring.',[{label:'Wash and refresh · +8 energy',run:()=>{state.flags.washed=true;restore(8,0,0,'Washed and ready for the hot spring.');}}]);return;}
+    if(o.action==='locker'){panel(o.name,'Your belongings stay safely in your bag; no items disappear when you visit the baths, rest, or leave a fight.',[{label:'Check your bag',run:bag},{label:'Save your progress',run:()=>{save();close();notify(storageOK?'Progress saved on this device.':'Saving is blocked in this browser; progress is temporary.');}}]);return;}
+    if(o.action==='inspect'){panel(o.name,o.description||'A useful detail in this little town.');return;}
     if(o.stock){shop(o.name,o.stock);return;}
     if(o.type==='vending'){shop(o.name,o.id==='vending2'?['boss','iyemon','water','oolong','pocari']:['water','iyemon','pocari','oolong','boss']);return;}
     if(o.id==='microwave'){transform('bento','warmBento','Microwave');return;}
@@ -163,7 +166,14 @@
         {label:'Store 25 coins',disabled:coins()<25,run:()=>{if(pay(25)){state.stash+=25;save();interact(o);}}},
         {label:'Take out 25 coins',disabled:state.stash<25,run:()=>{if(state.stash>=25){state.stash-=25;award(25);save();interact(o);}}}]);return;
     }
-    if(['bench','seat','table'].includes(o.type)){panel(o.name,'Sit for a little while. No cost.',[{label:'Sit and rest · +25 energy',run:()=>restore(25,0,0,'You take a quiet break. Energy restored.')}]);return;}
+    if(['bench','seat','table'].includes(o.type)){
+      const buttons=[{label:'Sit and rest · +25 energy',run:()=>{
+        restore(25,0,0,'You take a quiet break. Move to stand up.');
+        if(o.type!=='table')restSeat={id:o.id,x:o.x+o.w/2,y:o.y+o.h/2+11};
+      }},{label:'Eat something from your bag',run:bag}];
+      if(o.dining&&D.shops[state.room]?.stock.length)buttons.push({label:'Order from the menu',run:()=>shop(D.shops[state.room].name,D.shops[state.room].stock)});
+      panel(o.name,'Take a seat, enjoy food from your bag, or browse the menu. Resting is free.',buttons);return;
+    }
     if(o.type==='fountain'){panel(o.name,'Refill and enjoy a drink without leaving a disposable bottle.',[{label:'Drink water · +18 energy',run:()=>restore(18,0,0,'A refreshing drink of water.')}]);return;}
     if(o.type==='bath'){
       const fee=state.bag.towel>0?8:15;panel('Cedar Hot Spring','A restorative game break. Use your own towel for a discount.',[{label:'Take a bath · '+fee+' coins',disabled:coins()<fee,run:()=>restore(100,0,fee,'You leave the hot spring refreshed.') }]);return;
@@ -200,12 +210,13 @@
     panel(o.name,description);
   }
   function arena(){
-    close();save();mode='arena';keys={};$('townView').hidden=true;$('arenaView').hidden=false;$('townTab').classList.remove('active');$('arenaTab').classList.add('active');
+    if(mode==='arena'){$('arenaFrame').focus();return;}
+    close();save();mode='arena';keys={};targetId=null;restSeat=null;$('townView').hidden=true;$('arenaView').hidden=false;$('townTab').classList.remove('active');$('arenaTab').classList.add('active');
     $('arenaFrame').src='arena.html?from=hakone&p1='+encodeURIComponent(state.fighter);$('leaveFight').hidden=false;hud();
   }
   function town(){
-    mode='town';$('arenaFrame').src='about:blank';$('arenaView').hidden=true;$('townView').hidden=false;$('leaveFight').hidden=true;
-    $('townTab').classList.add('active');$('arenaTab').classList.remove('active');keys={};hud();notify('Back in Hakone. Your town position and purchases are kept.');
+    mode='town';targetId=null;restSeat=null;$('arenaFrame').src='about:blank';$('arenaView').hidden=true;$('townView').hidden=false;$('leaveFight').hidden=true;
+    $('townTab').classList.add('active');$('arenaTab').classList.remove('active');keys={};hud();canvas.focus({preventScroll:true});notify('Back in Hakone. Your town position and purchases are kept.');
   }
   $('arenaFrame').addEventListener('load',()=>{
     if(mode!=='arena')return;
@@ -213,10 +224,10 @@
       w.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();town();}});
     }catch(_){}
   });
-  $('panelClose').onclick=close;$('panel').addEventListener('cancel',()=>{dialogAction=null;keys={};});
+  $('panelClose').onclick=close;$('panel').addEventListener('cancel',()=>{dialogAction=null;keys={};requestAnimationFrame(()=>canvas.focus({preventScroll:true}));});
   $('bagButton').onclick=bag;$('upgradeButton').onclick=upgrade;$('fighterButton').onclick=selectFighter;
   $('mapButton').onclick=()=>map();$('townTab').onclick=town;$('arenaTab').onclick=arena;$('leaveFight').onclick=town;
-  $('interactButton').onclick=()=>interact();$('weather').onclick=()=>{state.rain=!state.rain;save();notify(state.rain?'Rain begins. A clear umbrella helps.':'The sky clears.');};
+  $('interactButton').onclick=()=>tryInteract();$('nextTarget').onclick=cycleTarget;$('weather').onclick=()=>{state.rain=!state.rain;save();notify(state.rain?'Rain begins. A clear umbrella helps.':'The sky clears.');};
   $('mute').onclick=()=>{const muted=$('mute').getAttribute('aria-pressed')!=='true';$('mute').setAttribute('aria-pressed',String(muted));$('mute').textContent=muted?'Sound off':'Sound on';};
   $('sourcesButton').onclick=()=>{
     panel('Research & art notes','Unofficial fan-made game. The map and all prices, rewards and item effects are fictional. Product categories were checked against the official sources below; real inventories vary by region and store. Artwork is original procedural pixel art, not copied tutorial assets.');
@@ -234,9 +245,10 @@
       }
       return;
     }
+    if(k==='tab'&&document.activeElement===canvas){e.preventDefault();if(!e.repeat)cycleTarget();return;}
     if(['arrowleft','arrowright','arrowup','arrowdown',' ','w','a','s','d'].includes(k))e.preventDefault();keys[k]=true;
     if(e.repeat)return;
-    if(k==='e')interact();if(k==='b')bag();if(k==='u')upgrade();if(k==='m')map();
+    if(k==='e'){e.preventDefault();tryInteract();}if(k==='b')bag();if(k==='u')upgrade();if(k==='m')map();
   });
   addEventListener('keyup',e=>delete keys[e.key.toLowerCase()]);addEventListener('blur',()=>keys={});
   document.addEventListener('visibilitychange',()=>{keys={};if(document.hidden)save();});addEventListener('pagehide',save);
@@ -246,15 +258,18 @@
   }
   let camera={x:0,y:0};
   canvas.addEventListener('pointerdown',e=>{
+    if(mode!=='town'||$('panel').open)return;
     const r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)*canvas.width/r.width+camera.x,y=(e.clientY-r.top)*canvas.height/r.height+camera.y;
-    const options=objects().filter(o=>{const a=anchor(o);return Math.hypot(a.x-state.x,a.y-state.y)<52&&x>=o.x-8&&x<=o.x+o.w+8&&y>=o.y-8&&y<=o.y+o.h+15;});
-    if(options.length)interact(options[options.length-1]);else canvas.focus();
+    const all=objects(),clicked=all.filter(o=>I.hitTest(o,x,y)).sort((a,b)=>(b.y+b.h)-(a.y+a.h));
+    const usable=clicked.find(o=>I.canReach(state,o,all));
+    if(usable){targetId=usable.id;tryInteract(usable);}
+    else {canvas.focus({preventScroll:true});if(clicked.length)notify('Walk closer to '+clicked[0].name+'. Press E when its name appears.');}
   });
   function update(dt){
     if(mode!=='town'||$('panel').open||document.hidden)return;
     let dx=(keys.arrowright||keys.d?1:0)-(keys.arrowleft||keys.a?1:0),dy=(keys.arrowdown||keys.s?1:0)-(keys.arrowup||keys.w?1:0);
     const length=Math.hypot(dx,dy),sprint=keys.shift&&state.energy>1,velocity=sprint?138:88;
-    if(length){dx/=length;dy/=length;const nx=state.x+dx*velocity*dt,ny=state.y+dy*velocity*dt;
+    if(length){restSeat=null;targetId=null;dx/=length;dy/=length;const nx=state.x+dx*velocity*dt,ny=state.y+dy*velocity*dt;
       if(!blocked(nx,state.y))state.x=nx;if(!blocked(state.x,ny))state.y=ny;
       state.dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');state.step+=dt*10;
       state.energy=clamp(state.energy-dt*(sprint?4:state.rain&&!state.umbrella?.6:.06),0,100);state.fullness=clamp(state.fullness-dt*.08,0,100);
@@ -266,20 +281,37 @@
     const W=state.room?640:D.width,H=state.room?480:D.height;
     camera={x:Math.round(clamp(state.x-320,0,Math.max(0,W-640))),y:Math.round(clamp(state.y-220,0,Math.max(0,H-400)))};
     ctx.save();ctx.clearRect(0,0,640,400);ctx.translate(-camera.x,-camera.y);A.ground(ctx,state.room,Math.floor(clock*60));
-    const list=objects(),nearby=near();
-    const layers=[...list.map(o=>({y:o.y+o.h,draw:()=>{if(o.type==='building')A.building(ctx,o);else A.prop(ctx,o,clock*60,state);}})),{y:state.y,draw:()=>{
-      A.person(ctx,state.fighter,state.x,state.y,state.dir,Math.floor(state.step)%6);
-      if(state.rain&&state.umbrella&&state.bag.umbrella){A.rect(ctx,state.x-20,state.y-42,40,4,'#b9d0cb');A.rect(ctx,state.x-16,state.y-46,32,4,'#cbded1');A.rect(ctx,state.x-9,state.y-49,18,3,'#d9e7da');A.rect(ctx,state.x+9,state.y-41,2,20,'#7f9693');}
+    const list=objects(),choices=I.nearby(state,list),nearby=near();
+    const layers=[...list.map(o=>({y:o.y+o.h,draw:()=>{if(o.type==='building')A.building(ctx,o);else A.prop(ctx,o,clock*60,state);}})),{y:restSeat?restSeat.y:state.y,draw:()=>{
+      if(restSeat)HakoneSeating.draw(ctx,state.fighter,restSeat.x,restSeat.y);
+      else A.person(ctx,state.fighter,state.x,state.y,state.dir,Math.floor(state.step)%6);
+      if(!restSeat&&state.rain&&state.umbrella&&state.bag.umbrella){A.rect(ctx,state.x-20,state.y-42,40,4,'#b9d0cb');A.rect(ctx,state.x-16,state.y-46,32,4,'#cbded1');A.rect(ctx,state.x-9,state.y-49,18,3,'#d9e7da');A.rect(ctx,state.x+9,state.y-41,2,20,'#7f9693');}
     }}].sort((a,b)=>a.y-b.y);layers.forEach(x=>x.draw());
-    if(nearby){const a=anchor(nearby);A.rect(ctx,a.x-8,a.y-4,16,2,'#ffe1a0');A.text(ctx,'E',a.x,nearby.y-8,'#ffe1a0',11);}
+    if(nearby){
+      const a=I.point(state,nearby);ctx.save();ctx.strokeStyle='#ffe1a0';ctx.lineWidth=1;
+      if(nearby.type==='building')ctx.strokeRect(nearby.x+nearby.w/2-16,nearby.y+nearby.h-40,32,40);
+      else ctx.strokeRect(nearby.x-2,nearby.y-2,nearby.w+4,nearby.h+4);
+      A.rect(ctx,a.x-7,a.y,14,2,'#ffe1a0');A.text(ctx,'E',nearby.x+nearby.w/2,nearby.y-8,'#ffe1a0',11);ctx.restore();
+    }
     ctx.restore();
     if(state.rain&&!state.room){ctx.strokeStyle='#c5d8ce55';ctx.lineWidth=1;for(let i=0;i<60;i++){const x=(i*71+clock*34)%660,y=(i*47+clock*130)%416;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-3,y+7);ctx.stroke();}}
     A.rect(ctx,10,10,122,25,'#253b3edb');A.text(ctx,state.room?'INDOORS':'HAKONE · N ↑',71,27,'#e7d5aa',10);
-    const n=nearby?nearby.name:'Explore · E interacts · B opens bag';$('prompt').textContent=nearby?'E — '+n:n;
+    const n=nearby?nearby.name:'Explore · E interacts · B opens bag';
+    $('prompt').textContent=restSeat?'Resting · Move to stand up':nearby?'E — '+n+(choices.length>1?' · Tab: next':''):n;
+    $('interactButton').disabled=!nearby;$('nextTarget').hidden=choices.length<2;
   }
   let previous=performance.now();
   function frame(now){const dt=Math.min(.04,(now-previous)/1000);previous=now;update(dt);draw();if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)$('notice').textContent='';}requestAnimationFrame(frame)}
-  if(blocked(state.x,state.y)){state.room=null;state.x=200;state.y=270;}
+  // Furniture may have been added at an old saved position. Relocate inside the
+  // same room rather than dumping the traveler outside or leaving them trapped.
+  if(blocked(state.x,state.y)){
+    let free=null;
+    for(let radius=8;radius<=240&&!free;radius+=8)for(let angle=0;angle<16;angle++){
+      const x=Math.round(state.x+Math.cos(angle*Math.PI/8)*radius),y=Math.round(state.y+Math.sin(angle*Math.PI/8)*radius);
+      if(!blocked(x,y)){free={x,y};break;}
+    }
+    if(free){state.x=free.x;state.y=free.y;}else{state.room=null;state.x=200;state.y=270;}
+  }
   hud();save();requestAnimationFrame(frame);notify('Welcome to Hakone Life. Walk with arrows or WASD. Press E near a doorway or object.');
-  window.HakoneLife={snapshot:()=>JSON.parse(JSON.stringify({...state,coins:coins(),mode,storageOK})),objects:()=>objects().map(o=>({...o,anchor:anchor(o)})),interact,enter,bag,upgrade,use,arena,town,save,blocked};
+  window.HakoneLife={snapshot:()=>JSON.parse(JSON.stringify({...state,coins:coins(),mode,storageOK,seated:restSeat?.id||null,lastInteraction})),objects:()=>objects().map(o=>({...o,anchor:anchor(o)})),interact,tryInteract,cycleTarget,nearby:()=>I.nearby(state,objects()).map(c=>c.object.id),enter,bag,upgrade,use,arena,town,save,blocked};
 })();
