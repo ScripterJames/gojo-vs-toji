@@ -150,6 +150,24 @@ try:
     enter('ramen');page.screenshot(path=str(OUT/'ramen.png'),full_page=True)
     page.set_viewport_size({'width':390,'height':844});page.screenshot(path=str(OUT/'mobile.png'),full_page=True)
     check('Mobile page still fits the screen',page.evaluate('document.documentElement.scrollWidth<=innerWidth'))
+    # A touch D-pad press may lose pointer capture when the OS interrupts a
+    # gesture. It must not leave a direction held indefinitely.
+    enter('seven')
+    pad=page.locator('[data-move="arrowright"]')
+    bounds=pad.bounding_box()
+    page.mouse.move(bounds['x']+bounds['width']/2,bounds['y']+bounds['height']/2)
+    start_x=snap()['x']
+    page.mouse.down()
+    try:
+        page.wait_for_function('(x)=>HakoneLife.snapshot().x > x+5',arg=start_x,timeout=5000)
+        page.evaluate('''()=>{const b=document.querySelector('[data-move="arrowright"]');b.dispatchEvent(new PointerEvent('lostpointercapture',{bubbles:true,pointerType:'touch',pointerId:1}));}''')
+        page.wait_for_timeout(60)
+        released_x=snap()['x']
+        page.wait_for_timeout(240)
+        final_x=snap()['x']
+        check('Lost touch D-pad capture releases movement',abs(final_x-released_x)<2,{'release':released_x,'after':final_x})
+    finally:
+        page.mouse.up()
     check('No JavaScript exceptions',not errors,errors)
     print(json.dumps({'passed':len(checks),'scope':'inline HTML, explicit Storage double' if INLINE else 'real localhost HTTP, native localStorage','objects_checked':sum(reach),'tests':checks,'screenshots':str(OUT)},indent=2))
     browser.close()

@@ -272,7 +272,7 @@
   document.addEventListener('visibilitychange',()=>{keys={};if(document.hidden)save();});addEventListener('pagehide',save);
   addEventListener('storage',e=>{if(e.key===COINS||e.key===LEVELS)hud();});
   for(const btn of document.querySelectorAll('[data-move]')){
-    const clear=()=>delete keys[btn.dataset.move];btn.onpointerdown=e=>{e.preventDefault();btn.setPointerCapture(e.pointerId);route=null;chosen=null;hovered=null;keys[btn.dataset.move]=true;};btn.onpointerup=clear;btn.onpointercancel=clear;
+    const clear=()=>delete keys[btn.dataset.move];btn.onpointerdown=e=>{e.preventDefault();btn.setPointerCapture(e.pointerId);route=null;chosen=null;hovered=null;keys[btn.dataset.move]=true;};btn.onpointerup=clear;btn.onpointercancel=clear;btn.onlostpointercapture=clear;
   }
   let camera={x:0,y:0};
   function walkTo(p){

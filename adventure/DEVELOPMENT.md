@@ -255,3 +255,21 @@ Added a bounded empty-ground destination mode to `adventure/town.js`: click/tap 
 - A separate local Chromium mobile-emulation smoke check used a real `page.touchscreen.tap` at viewport 390x844 with `is_mobile=True`, `has_touch=True` and a disclosed in-memory Storage double. The character walked to the exact ground coordinate in 7-Eleven without JavaScript errors. This is browser touch emulation, not a real phone test.
 - Fresh main ref was checked before a no-force, expected-head fast-forward; only `adventure/town.js`, `adventure/index.html`, `tests/test_hakone_interactions.py` and this log changed. The original root and `preview/` stayed untouched. GitHub Pages [run 42742386080](https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42742386080) for the exact tested source SHA completed **successfully**. This establishes successful deployment, not full human public-origin playthrough; the available research browser could not fetch the public Pages URL.
 - This paragraph is a **documentation-only follow-up**. No runtime or test bytes were changed after the successful branch CI and source deployment. Future work: verify on a physical touch device and fix specific reported defects; no balance claims beyond regression coverage.
+
+
+## November 9, 2026, ~7 PM Pacific — touch control capture stabilization
+
+### Reproduced and fixed
+- Fresh main and `hakone-town-travelers` both began at `01514b9d00b92c58ad8d9842e3741144bd976858`. Reviewed the traveler/interaction documentation and current scripts, avoiding duplicate roster, scenery, and furnishing work.
+- Found a specific touchscreen D-pad issue: each arrow button cleared movement on `pointerup` and `pointercancel`, but **not** on `lostpointercapture`. When capture was lost without either release event, the movement key stayed down. Reproduced in real Chromium mobile viewport with a held right-arrow mouse pointer: after dispatching lost capture while still pressed, x moved a further **about 22 pixels in 250 ms** on the baseline. This is an event-loss simulation, not proof the problem happened on a physical phone.
+- Added `btn.onlostpointercapture=clear` alongside existing pointer up/cancel handlers in `adventure/town.js`. A regression check in `tests/test_hakone_interactions.py` holds the visible D-pad, confirms movement, synthesizes the lost capture event, and asserts the position remains stable while the physical pointer is still down.
+- This only changes touch-arrow cleanup. No changes to pathfinding, object selection, town renderer, combat, save keys, shop geometry, original root /index.html or any /preview/ file.
+
+### Local verification and limits
+- Baseline bug reproduced in headless Chromium using `page.set_content` and an **explicit in-memory Storage substitute**. After the fix, the same test showed **0 px** further movement after lost capture (baseline ~22 px).
+- Candidate passed `HAKONE_TEST_MODE=inline python tests/test_hakone_interactions.py` (**41 checks**, including new capture test), `python tests/test_hakone.py` (**42**), `python tests/test_hakone_arena.py` (**84**), and `HAKONE_TEST_MODE=inline python tests/test_hakone_travelers.py` (**38**). All used real Chromium with disclosed source-loaded/mocked-storage arrangements; `node --check adventure/town.js` and Python compilation also passed.
+- Local localhost navigation remains blocked (`ERR_BLOCKED_BY_ADMINISTRATOR`). The existing interaction suite defaults to **native localhost HTTP and native localStorage** in GitHub Actions, which must pass before publication; existing integration/shop tests must pass too.
+- The previous deployed main SHA `01514b9d00b92c58ad8d9842e3741144bd976858` passed [Pages deployment 42742816297](https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42742816297) and [Chromium regression 42742816839](https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42742816839). Direct public Pages game navigation is still blocked by the research browser; no public-origin playthrough is claimed.
+
+### Next gate
+Inspect the **exact new branch SHA** CI result, fix if needed, then fast-forward main using an expected-head check (never force); verify GitHub Pages separately. Favor real device touch validation and specific gameplay defects over speculative new features before the 8:45 PM review.
