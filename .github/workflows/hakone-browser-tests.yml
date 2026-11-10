@@ -2,7 +2,7 @@ name: Hakone browser regression
 
 on:
   push:
-    branches: [main, hakone-town-expansion, hakone-shop-polish, hakone-interactions-grounding, hakone-town-travelers]
+    branches: [main, hakone-town-expansion, hakone-shop-polish, hakone-interactions-grounding, hakone-town-travelers, hakone-strongest-onsen]
     paths:
       - "adventure/**"
       - "tests/test_hakone.py"
@@ -11,6 +11,9 @@ on:
       - "tests/test_hakone_shop_art.py"
       - "tests/test_hakone_interactions.py"
       - "tests/test_hakone_travelers.py"
+      - "tests/test_hakone_strongest.py"
+      - "tests/test_hakone_onsen.py"
+      - "tests/test_hakone_food_art.py"
       - ".github/workflows/hakone-browser-tests.yml"
   workflow_dispatch:
 
@@ -44,3 +47,9 @@ jobs:
         run: python tests/test_hakone_interactions.py
       - name: Test town travelers, directions and scenery
         run: python tests/test_hakone_travelers.py
+      - name: Test strongest fighter and next-challenger ladder
+        run: python tests/test_hakone_strongest.py
+      - name: Test actual onsen washing, soaking and safe exits
+        run: python tests/test_hakone_onsen.py
+      - name: Test warm restaurants and untouched convenience store
+        run: python tests/test_hakone_food_art.py
