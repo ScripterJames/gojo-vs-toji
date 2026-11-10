@@ -138,6 +138,11 @@ try:
                        JSON.parse(w.localStorage.getItem('{LEVELS}')).Mahito.power===1;
               }}"""))
 
+        # This fixture checks a single win, storage and leaving; the separate
+        # strongest suite tests the enabled ladder and its changing countdown.
+        # Use the real checkbox so "wins!" is a stable single-fight result,
+        # not the one-frame text before "Round won! Next challenger" replaces it.
+        iframe.locator("#autoNext").uncheck()
         iframe.locator("#start").click()
         arena = page.frame(url=lambda url: url.startswith(base + "/adventure/arena.html"))
         assert arena is not None, "Arena frame did not load"
