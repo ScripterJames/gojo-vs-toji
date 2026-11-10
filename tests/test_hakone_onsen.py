@@ -8,7 +8,7 @@ from functools import partial
 from http.server import SimpleHTTPRequestHandler,ThreadingHTTPServer
 from threading import Thread
 import json,os,re,shutil,tempfile
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, expect
 ROOT=Path(__file__).resolve().parents[1]; A=ROOT/'adventure'; OUT=Path(tempfile.mkdtemp(prefix='hakone-onsen-'))
 INLINE=os.environ.get('HAKONE_TEST_MODE')=='inline'; checks=[]; server=None
 class Quiet(SimpleHTTPRequestHandler):
@@ -61,7 +61,13 @@ try:
   page.get_by_role('button',name='Enter bath · 15 coins').click();page.wait_for_function('HakoneLife.snapshot().activity?.kind==="soak"')
   s=snap();check('Traveler is visibly placed inside the pool',176<s['x']<464 and 132<s['y']<232,s)
   check('Bath charges once on entry',s['coins']==185)
-  check('Step out button is visible and enabled',page.locator('#interactButton').is_enabled() and 'Step out' in page.locator('#interactButton').inner_text())
+  # Activity state changes in the click handler; the label updates in the next
+  # animation frame. Await the actual rendered control instead of a same-tick
+  # non-retrying is_enabled()/inner_text() read. A broken control still fails.
+  expect(page.locator('#interactButton')).to_be_visible(timeout=5000)
+  expect(page.locator('#interactButton')).to_have_text('Step out [E]',timeout=5000)
+  expect(page.locator('#interactButton')).to_be_enabled(timeout=5000)
+  check('Step out button is visible and enabled',True)
   e=s['energy'];page.wait_for_function('e=>HakoneLife.snapshot().energy>e+8',arg=e,timeout=10000)
   check('Soaking restores energy gradually, not an instant menu reward',snap()['energy']<100 and snap()['coins']==185,snap()['energy'])
   page.locator('#world').screenshot(path=str(OUT/'onsen-soaking.png'))
