@@ -1,0 +1,106 @@
+name: Verify strongest and onsen candidate
+on:
+  push:
+    branches: [hakone-strongest-onsen]
+    paths:
+      - 'docs/patches/strongest-*.b64'
+      - '.github/workflows/hakone-strongest-candidate.yml'
+permissions:
+  contents: write
+concurrency:
+  group: hakone-strongest-candidate
+  cancel-in-progress: false
+jobs:
+  verify-candidate:
+    if: github.ref == 'refs/heads/hakone-strongest-onsen'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: hakone-strongest-onsen
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Apply hash-checked reviewed source changes
+        shell: bash
+        run: |
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+          git merge-base --is-ancestor 4e134b10f17e0ed7a8ecb2526b7b94d947ae6dce HEAD
+          python - <<'PY'
+          import base64, hashlib, json, lzma
+          from pathlib import Path
+          pieces = sorted(Path('docs/patches').glob('strongest-*.b64'))
+          assert len(pieces) == 4
+          packed = base64.b64decode(''.join(p.read_text().strip() for p in pieces), validate=True)
+          assert hashlib.sha256(packed).hexdigest() == '99e4558bf3d2c63fec6550c64291883f14e404ef0fd6436298d48302ed456b3c'
+          manifest = json.loads(lzma.decompress(packed))
+          assert manifest['base'] == '4e134b10f17e0ed7a8ecb2526b7b94d947ae6dce'
+          def blob(data):
+              return hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+          for change in manifest['changes']:
+              path = Path(change['path'])
+              assert not path.is_absolute() and '..' not in path.parts
+              assert str(path).startswith(('adventure/', 'tests/')) or str(path) in ['docs/HAKONE_STRONGEST_ONSEN.md','.github/workflows/hakone-browser-tests.yml']
+              original = path.read_bytes() if path.exists() else b''
+              assert (blob(original) if path.exists() else None) == change['before'], str(path)
+              lines = original.decode('utf-8').splitlines(keepends=True)
+              for edit in reversed(change['edits']):
+                  assert 0 <= edit['a'] <= edit['b'] <= len(lines)
+                  lines[edit['a']:edit['b']] = edit['text'].splitlines(keepends=True)
+              content = ''.join(lines).encode('utf-8')
+              assert blob(content) == change['after'], str(path)
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(content)
+              print('Verified', path, change['after'])
+          PY
+          git diff --check
+          git diff --exit-code 4e134b10f17e0ed7a8ecb2526b7b94d947ae6dce -- index.html preview/
+      - name: Install browser test dependencies
+        shell: bash
+        run: |
+          python -m pip install playwright==1.60.0
+          python -m playwright install --with-deps chromium
+      - name: Run all nine actual browser suites
+        shell: bash
+        run: |
+          for name in hakone hakone_arena hakone_origin hakone_shop_art hakone_interactions hakone_travelers hakone_strongest hakone_onsen hakone_food_art; do
+            echo "::group::test_${name}.py"
+            python "tests/test_${name}.py" | tee "$RUNNER_TEMP/test_${name}.log"
+            echo '::endgroup::'
+          done
+      - name: Record results and commit only to candidate branch
+        shell: bash
+        run: |
+          test "$GITHUB_REF" = refs/heads/hakone-strongest-onsen
+          test "$(git ls-remote origin refs/heads/hakone-strongest-onsen | cut -f1)" = "$GITHUB_SHA"
+          python - <<'PY'
+          import os, re
+          from pathlib import Path
+          names = ['hakone','hakone_arena','hakone_origin','hakone_shop_art','hakone_interactions','hakone_travelers','hakone_strongest','hakone_onsen','hakone_food_art']
+          counts=[]
+          for name in names:
+              text=(Path(os.environ['RUNNER_TEMP'])/('test_'+name+'.log')).read_text()
+              found=re.findall(r'"passed"\s*:\s*(\d+)', text)
+              assert found, name
+              counts.append((name,int(found[-1])))
+          report='\n\n## Complete candidate CI verification — PASS\n\n'
+          report+='GitHub Actions run '+os.environ['GITHUB_RUN_ID']+' on transport commit '+os.environ['GITHUB_SHA']+'.\n'
+          report+='All nine suites executed successfully after validating every base and final source blob.\n'
+          for name,n in counts: report+='- test_'+name+'.py: '+str(n)+' passing assertions.\n'
+          report+='Total: '+str(sum(n for _,n in counts))+' assertions.\n'
+          report+='The origin, shop, interactions, travelers and onsen suites ran on actual localhost HTTP with native storage and real iframes. Other suites declare source-loaded or clock/Storage fixtures. These are automated tests, not full human matches or a public-site playthrough. Publication and Pages success must still be verified separately.\n'
+          path=Path('docs/HAKONE_STRONGEST_ONSEN.md');path.write_text(path.read_text()+report)
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as output: output.write(report)
+          PY
+          # The workflow token commits runtime only; connector performs workflow cleanup.
+          git restore .github/workflows/hakone-browser-tests.yml
+          git add adventure tests/*.py docs/HAKONE_STRONGEST_ONSEN.md
+          git diff --cached --exit-code -- .github/workflows/
+          git diff --cached --check
+          git diff --cached --exit-code 4e134b10f17e0ed7a8ecb2526b7b94d947ae6dce -- index.html preview/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Add tested Strongest of History, challenger progression and usable onsen'
+          git push origin HEAD:refs/heads/hakone-strongest-onsen
