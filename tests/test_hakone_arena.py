@@ -66,7 +66,7 @@ with sync_playwright() as p:
     page.set_content(html)
     page.wait_for_timeout(150)
     roster = page.evaluate("HakoneRoster.roster")
-    check("Sixteen playable choices", len(roster) == 16, roster)
+    check("Seventeen playable choices", len(roster) == 17, roster)
     for name in ["Toge", "Panda", "Nanami", "Yuta", "Choso", "Todo", "Jogo", "Mahito"]:
         check(name + " has a sprite", page.evaluate(
             "(n) => HakoneArtFighters.ready(n)", name))
@@ -75,15 +75,15 @@ with sync_playwright() as p:
         check(name + " has an upgrade bank", page.evaluate(
             "(n) => !!UpgradeShop.levels[n]", name))
     check("Initial 50 coins", page.evaluate("UpgradeShop.coins") == 50)
-    check("Arena has 16 options for each player",
-          page.locator("#c1 option").count() == 16
-          and page.locator("#c2 option").count() == 16)
+    check("Arena has 17 options for each player",
+          page.locator("#c1 option").count() == 17
+          and page.locator("#c2 option").count() == 17)
 
     controls = "{left:'arrowleft',right:'arrowright',jump:'arrowup',jumpAlt:' ',punch:'f',kick:'d',special:'a'}"
-    def start(name, enemy="Gojo", gap=110):
+    def start(name, enemy="Gojo", gap=110, match_mode="pvp"):
         page.locator("#c1").select_option(name)
         page.locator("#c2").select_option(enemy)
-        page.locator("#mode").select_option("pvp")
+        page.locator("#mode").select_option(match_mode)
         page.locator("#start").click()
         page.evaluate("""gap => {
             fighters[0].x=200;
@@ -119,14 +119,12 @@ with sync_playwright() as p:
             } finally { Math.random=original; }
         }""")
 
-    start("Toji", "Gojo", gap=170)
-    page.locator("#mode").select_option("cpu")
+    start("Toji", "Gojo", gap=170, match_mode="cpu")
     gojo_cpu=cpu_tick()
     check("CPU Gojo actively casts Blue",
           gojo_cpu["blue"]>0 and gojo_cpu["cool"]>0,gojo_cpu)
 
-    start("Gojo", "Toji", gap=180)
-    page.locator("#mode").select_option("cpu")
+    start("Gojo", "Toji", gap=180, match_mode="cpu")
     toji_cpu=cpu_tick()
     check("CPU Toji can attack with a forward dash",
           toji_cpu["dash"]==-1 and toji_cpu["invul"]>0,toji_cpu)
@@ -141,16 +139,14 @@ with sync_playwright() as p:
     check("CPU Toji offensive dash lands once",
           dash_result["hp"]==77 and dash_result["hit"],dash_result)
 
-    start("Gojo", "Toji", gap=130)
-    page.locator("#mode").select_option("cpu")
+    start("Gojo", "Toji", gap=130, match_mode="cpu")
     page.evaluate("fighters[0].blue=120")
     evade_cpu=cpu_tick()
     check("CPU Toji still evades an active Blue",
           evade_cpu["dash"]==1 and evade_cpu["invul"]>0,evade_cpu)
 
     for cpu_name in [n for n in roster if n not in ["Gojo", "Toji"]]:
-        start("Toji", cpu_name, gap=170)
-        page.locator("#mode").select_option("cpu")
+        start("Toji", cpu_name, gap=170, match_mode="cpu")
         state=cpu_tick()
         check("CPU " + cpu_name + " activates unique special",
               state["cool"]>0,state)

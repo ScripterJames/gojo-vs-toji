@@ -6,25 +6,26 @@
   const A=window.HakoneArt,life=window.HakoneLife;
   if(!A||!life)return;
   const W=32,H=42,SOLE=38,INK='#202e3b',BOOT='#263441';
-  const roster=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo','Jogo','Mahito'];
+  const roster=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo','Jogo','Mahito','The Strongest of History'];
   // Hair, shaded hair, shirt, lit cloth, trousers, skin, signature accent.
   const P={
     Gojo:['#edf3eb','#b4c9d6','#293447','#4d6075','#bdc0cd','#e6bca0','#86cbef'],
     Toji:['#25313c','#40505a','#34493f','#557160','#a29baf','#d6a587','#a780b9'],
     Hakari:['#e4cd92','#ad905d','#416958','#78967a','#5d536d','#c79576','#efca75'],
-    Sukuna:['#dc91a1','#a95878','#80506a','#a57083','#323b51','#dfaa91','#ef6582'],
+    Sukuna:['#df91a0','#a85575','#ddd6c9','#fff0dc','#524257','#e0ae95','#f47797'],
+    'The Strongest of History':['#e99b91','#a64860','#4b2439','#9b4358','#e4d7bd','#e2b294','#f5cc73'],
     Megumi:['#1b2b3d','#405671','#2b3e59','#4c637c','#2a374f','#d9ae91','#a4bada'],
-    Yuji:['#dd8c95','#a9526a','#7b3c52','#b85668','#2d3c53','#dda98e','#eb8990'],
+    Yuji:['#e49a9c','#a85a71','#25364e','#4b617e','#29394d','#e7b297','#c95165'],
     Nobara:['#b87448','#7c4d32','#2c405b','#4d657d','#34435a','#e6b69a','#d9b782'],
-    Maki:['#263f43','#52716c','#3b5f50','#6c8b75','#354c43','#dab194','#b7cdb5'],
+    Maki:['#264b48','#173239','#353d5a','#646881','#2c334b','#dfb193','#c6d09b'],
     Toge:['#e0e4d7','#9ea99e','#45617b','#7d99aa','#30425b','#dbb295','#c6ded9'],
     Panda:['#eeeade','#a4ada8','#e8e5d7','#fbf5e4','#2b3442','#eee7d8','#a7bac5'],
-    Nanami:['#dec07b','#9b7b4c','#b4a078','#e2cda3','#4d6074','#dcaf8f','#e5c267'],
+    Nanami:['#e4c17c','#a47c4d','#baaa85','#e1d4ac','#ad9d7e','#e0b192','#e1b866'],
     Yuta:['#25303c','#4a5365','#e2e5da','#f8f4e6','#2b3b53','#e2b69a','#b7b1d9'],
     Choso:['#2f2d3b','#584b58','#e3dcca','#f6ebd5','#5a4c65','#d6aa97','#a7586c'],
     Todo:['#2c3545','#4c5260','#b58671','#ddb095','#4b4960','#c99478','#c09cde'],
-    Jogo:['#b66945','#844e42','#79534c','#ac7a55','#4a3a48','#d5b18b','#f2b45e'],
-    Mahito:['#aac6d5','#6c8ca7','#4c6986','#839db0','#485577','#d2b7ac','#b7cce8']
+    Jogo:['#9c5741','#623c3e','#34343b','#5c5b5c','#2b2f39','#d2bda0','#eab15e'],
+    Mahito:['#a6c8d4','#64879d','#2b3345','#506279','#34394f','#d5bba9','#b3a5dd']
   };
   const cache=new Map(),basePerson=A.person;
   function frame(name,dir='down',phase=0){
@@ -40,7 +41,7 @@
       cache.set(key,cv);return cv;
     }
     const [hair,hairShade,shirt,cloth,pants,skin,accent]=P[name];
-    const side=dir==='right',back=dir==='up',wide=name==='Panda'||name==='Todo';
+    const side=dir==='right',back=dir==='up',wide=name==='Panda'||name==='Todo'||name==='The Strongest of History';
     const bob=[0,1,0,0,1,0][phase],swing=[0,2,1,0,-2,-1][phase];
     const liftA=phase===1?2:phase===2?1:0,liftB=phase===4?2:phase===5?1:0;
     const r=(x,y,w,h,col)=>{c.fillStyle=col;c.fillRect(Math.round(x),Math.round(y),w,h);};
@@ -89,7 +90,7 @@
       const x=side?7:back?22:5;r(x,17+bob,5,11,'#795c91');r(x-1,15+bob,6,6,accent);r(x+2,16+bob,1,2,'#efcfad');
       if(back)r(12,21+bob,12,3,'#795c91');
     }
-    if(name==='Sukuna'&&!back){r(side?23:12,15+bob,3,1,'#863f56');if(!side)r(20,15+bob,3,1,'#863f56');}
+    if((name==='Sukuna'||name==='The Strongest of History')&&!back){r(side?23:12,15+bob,3,1,'#863f56');if(!side)r(20,15+bob,3,1,'#863f56');}
     if(name==='Megumi'){r(9,3+bob,4,8,hair);r(23,1+bob,3,8,hair);if(!back)r(side?22:18,20+bob,1,5,accent);}
     if(name==='Yuji'){r(side?11:8,17+bob,side?12:17,4,'#b65568');if(back)r(10,20+bob,13,4,'#8b3b51');}
     if(name==='Nobara'){
@@ -127,6 +128,24 @@
       if(!back){r(side?22:20,12+bob,1,6,'#627588');r(side?21:18,15+bob,4,1,'#627588');}
       r(side?13:9,24+bob,side?9:16,2,'#364d68');
     }
+    if(name==='Sukuna'||name==='The Strongest of History'){
+      if(!back){
+        r(side?21:15,7+bob,2,3,INK);
+        r(side?20:14,7+bob,4,1,INK);
+        r(side?21:9,13+bob,side?5:5,1,INK);
+        if(!side)r(19,13+bob,5,1,INK);
+        r(side?23:11,15+bob,3,1,INK);if(!side)r(19,15+bob,3,1,INK);
+        r(side?23:15,17+bob,2,1,INK);
+      }
+      if(name==='The Strongest of History'){
+        limb(side?12:5,23+bob,side?8:3,29+bob,INK,4);
+        limb(side?13:6,23+bob,side?9:4,28+bob,skin,2);
+        limb(side?24:26,23+bob,side?27:28,28+bob,INK,4);
+        limb(side?24:26,24+bob,side?27:28,28+bob,skin,2);
+        r(side?13:8,29+bob,side?10:18,2,'#75374d');
+        r(side?17:15,29+bob,3,2,accent);
+      }
+    }
     cache.set(key,cv);return cv;
   }
   A.person=(ctx,name,x,y,dir='down',phase=0)=>{
@@ -142,7 +161,7 @@
   // Reuse the existing selection handlers so town/arena/save behavior stays identical.
   const button=document.getElementById('fighterButton'),body=document.getElementById('panelBody'),title=document.getElementById('panelTitle'),dialog=document.getElementById('panel');
   const nameNode=document.getElementById('fighter');
-  if(button&&nameNode){button.replaceChildren(document.createTextNode('Character: '),nameNode,document.createTextNode(' [C] ▾'));button.title='Choose any of the 16 characters to walk around Hakone';}
+  if(button&&nameNode){button.replaceChildren(document.createTextNode('Character: '),nameNode,document.createTextNode(' [C] ▾'));button.title='Choose any of the 17 characters to walk around Hakone';}
   const style=document.createElement('style');style.textContent=`
     #fighterButton{border-color:#b7a16e;color:#f2ddb0}
     #panelBody.traveler-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
@@ -155,7 +174,7 @@
   function decorate(){
     const selecting=title.textContent==='Choose your traveler';body.classList.toggle('traveler-grid',selecting);
     if(!selecting)return;
-    document.getElementById('panelDesc').textContent='Choose who you walk around Hakone as. All 16 characters are available, free. Your choice is saved and also carries into your next arena fight.';
+    document.getElementById('panelDesc').textContent='Choose who you walk around Hakone as. All 17 characters are available, free. Your choice is saved and also carries into your next arena fight.';
     const selected=life.snapshot().fighter;
     for(const b of body.querySelectorAll(':scope > button')){
       if(b.dataset.traveler)continue;

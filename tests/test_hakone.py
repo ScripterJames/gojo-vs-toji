@@ -19,7 +19,7 @@ ROOT=Path(__file__).resolve().parents[1]
 A=ROOT/'adventure'
 OUT=Path(tempfile.mkdtemp(prefix='hakone-test-'))
 base=(A/'index.html').read_text()
-for name in ['data','art','shop_art','interiors','interaction','town']:
+for name in ['data','art','shop_art','interiors','interaction','town','travelers','scene_art','onsen_art']:
     source=(A/f'{name}.js').read_text()
     if name=='town':
         # Source-level fixture only: move to an approach point without spending

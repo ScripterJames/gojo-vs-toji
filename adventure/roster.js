@@ -3,7 +3,7 @@
    No chance-based wagering: Hakari's "Jackpot" is a timed power-up on a cooldown. */
 (() => {
   'use strict';
-  const ROSTER=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo','Jogo','Mahito'];
+  const ROSTER=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo','Jogo','Mahito','The Strongest of History'];
   const NAMES={
     Gojo:'Blue · five-second nonlethal vortex',
     Toji:'Heavenly Restriction · evasive striking dash',
@@ -20,10 +20,12 @@
     Choso:'Piercing Blood · delayed narrow long-range beam',
     Todo:'Boogie Woogie · tactical position swap and stun',
     Jogo:'Volcanic Eruption · delayed targeted blast',
-    Mahito:'Idle Transfiguration · close touch and temporary slow'
+    Mahito:'Idle Transfiguration · close touch and temporary slow',
+    'The Strongest of History':'History’s Judgment · five crimson slashes, 125 total base damage; 500 HP'
   };
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   function init(f) {
+    f.judgment=0;f.judgmentStartedAt=0;f.judgmentPulses=0;f.judgmentDir=f.face;
     f.jackpot=0;f.jackpotAge=0;f.cleave=0;f.pet=0;f.petX=f.x+f.w/2;f.petCooldown=0;
     f.newSpecialFlash=0;f.cleaveVictim=null;
     f.blackFlash=0;f.blackFlashHit=false;f.blackFlashDir=f.face;
@@ -42,6 +44,9 @@
   function onCast(f,other) {
     f.attack=0;f.attackKind='';f.specialHeld=true;
     switch (f.name) {
+      case 'The Strongest of History':
+        f.judgment=300;f.judgmentStartedAt=performance.now();f.judgmentPulses=0;
+        f.judgmentDir=f.face;f.newSpecialFlash=24;f.specialCool=420;return true;
       case 'Hakari':
         f.jackpot=480;f.jackpotAge=0;f.newSpecialFlash=24;f.specialCool=660;
         f.flash=Math.max(f.flash,12);return true;
@@ -108,7 +113,19 @@
   function tick(f,other) {
     if(f.newSpecialFlash>0)f.newSpecialFlash--;
     if(f.transfigSlow>0)f.transfigSlow--;
-    if(f.hp<=0){f.jackpot=0;f.cleave=0;f.pet=0;f.blackFlash=0;f.nail=null;f.resonance=0;f.sweep=0;f.speech=0;f.stomp=0;f.ratio=0;f.rika=0;f.pierce=0;f.boogie=0;f.ember=0;f.transfigure=0;f.transfigSlow=0;return;}
+    if(f.hp<=0){f.judgment=0;f.jackpot=0;f.cleave=0;f.pet=0;f.blackFlash=0;f.nail=null;f.resonance=0;f.sweep=0;f.speech=0;f.stomp=0;f.ratio=0;f.rika=0;f.pierce=0;f.boogie=0;f.ember=0;f.transfigure=0;f.transfigSlow=0;return;}
+    if(f.judgment>0){
+      const elapsed=Math.max(0,performance.now()-f.judgmentStartedAt);
+      // Five impacts at 1,2,3,4,5 seconds, not five hits every rendering frame.
+      const due=Math.min(5,Math.floor((elapsed+.001)/1000));
+      while(f.judgmentPulses<due){
+        f.judgmentPulses++;
+        const dx=Math.abs((other.x+other.w/2)-(f.x+f.w/2));
+        const dy=Math.abs((other.y+other.h/2)-(f.y+f.h/2));
+        if(dx<=475&&dy<150)impact(f,other,25+5*(f.specialPower||0),'#fa688a',9);
+      }
+      f.judgment=Math.max(0,Math.ceil((5000-elapsed)*.06));
+    }
     if(f.jackpot>0) {
       f.jackpot--;f.jackpotAge++;
       if(f.jackpotAge%60===0)f.hp=Math.min(f.maxHp||100,f.hp+1+(f.specialPower||0));
@@ -279,6 +296,22 @@
     }
   }
   function front(ctx,f,frame){
+    if(f.judgment>0){
+      const x=f.x+f.w/2,y=f.y+f.h/2,age=Math.max(0,performance.now()-f.judgmentStartedAt);
+      const pulse=1-(age%1000)/1000;
+      ctx.save();ctx.globalCompositeOperation='screen';ctx.lineWidth=3;
+      ctx.strokeStyle='#c52f61';ctx.globalAlpha=.32;
+      ctx.beginPath();ctx.ellipse(x,y+38,Math.min(430,120+age*.16),21,0,0,Math.PI*2);ctx.stroke();
+      ctx.globalAlpha=.25+pulse*.45;ctx.strokeStyle='#ff8c9e';
+      for(let i=0;i<5;i++){
+        const xx=x-220+i*110;
+        ctx.beginPath();ctx.moveTo(xx-26,y-54);ctx.lineTo(xx+30,y+50);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(xx-30,y+36);ctx.lineTo(xx+35,y-44);ctx.stroke();
+      }
+      ctx.globalAlpha=.85;ctx.font='bold 15px monospace';ctx.textAlign='center';ctx.fillStyle='#ffd3a1';
+      ctx.fillText('HISTORY’S JUDGMENT',x,Math.max(145,f.y-28));ctx.restore();
+    }
+
     if(f.pet>0){
       // Original sprite: 20×13 pixel Divine Dog, rasterized at 3× whole-pixel scale.
       const p=f.petX,y=f.y+f.h-6;
@@ -432,6 +465,7 @@
     }
   }
   function status(f){
+    if(f.judgment>0)return 'JUDGMENT '+(f.judgment/60).toFixed(1)+'s';
     if(f.jackpot>0)return 'JACKPOT '+(f.jackpot/60).toFixed(1)+'s';
     if(f.cleave>0)return 'CLEAVE';
     if(f.pet>0)return 'DIVINE DOG '+(f.pet/60).toFixed(1)+'s';

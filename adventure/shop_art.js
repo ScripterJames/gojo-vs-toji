@@ -201,5 +201,5 @@
     c.restore();
   };
   // Diagnostic metadata is read-only; no access to player state or storage.
-  window.HakoneShopArt=Object.freeze({version:'1.0',get cachedFloors(){return floors.size},get cachedIcons(){return icons.size}});
+  window.HakoneShopArt=Object.freeze({version:'1.0',get cachedFloors(){return floors.size},get cachedIcons(){return icons.size},registerIcon(id,image){if(!D.items[id]||!(image instanceof HTMLCanvasElement)||image.width!==28||image.height!==28)throw new TypeError('Expected a known item and 28x28 canvas');icons.set(id,image);}});
 })();

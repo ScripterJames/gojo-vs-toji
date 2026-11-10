@@ -1,4 +1,4 @@
-/* Original, cached 100x80 pixel frames for the fourteen expansion fighters.
+/* Original, cached 100x80 pixel frames for the fifteen expansion fighters.
    Reference study: SLYNYRD Pixelblogs 29, 52 and 53 (see docs/HAKONE_INTERACTIONS_GROUNDING.md).
    No downloaded fan-art pixels or paid assets are redistributed.
    Sole anchor is explicit: transparent padding NEVER determines floor position. */
@@ -6,6 +6,7 @@
   'use strict';
   const W=100,H=80,SCALE=2,PIVOT=34,SOLE=74,FLOOR=450;
   const catalog={
+    'The Strongest of History':{hair:'#e99b91',hs:'#a64860',skin:'#e2b294',shade:'#aa6d65',top:'#4b2439',light:'#9b4358',pants:'#e4d7bd',pl:'#bca68e',shoe:'#342438',ink:'#301d31',accent:'#f5cc73',kind:'sovereign'},
     Hakari:{hair:'#e4cf95',hs:'#a88955',skin:'#c98f72',shade:'#96614f',top:'#426c57',light:'#76957a',pants:'#49435e',pl:'#72647f',shoe:'#282937',ink:'#202436',accent:'#f2ce69',kind:'jacket'},
     Sukuna:{hair:'#df91a0',hs:'#a85575',skin:'#e0ae95',shade:'#b57871',top:'#ddd6c9',light:'#fff0dc',pants:'#524257',pl:'#7c6077',shoe:'#282837',ink:'#342334',accent:'#f47797',kind:'robe'},
     Megumi:{hair:'#182237',hs:'#3d4e64',skin:'#dfb49a',shade:'#ad7d72',top:'#25364f',light:'#526780',pants:'#243147',pl:'#43546b',shoe:'#272632',ink:'#172233',accent:'#b1c2ed',kind:'uniform'},
@@ -27,7 +28,7 @@
     let key='idle',elapsed=tick;
     if(f.hp<=0){key='defeated';elapsed=0;}
     else if(f.attack>0&&['punch','kick'].includes(f.attackKind)){key=f.attackKind;elapsed=(key==='punch'?12:18)-f.attack;}
-    else if(f.cleave>0||f.blackFlash>0||f.sweep>0||f.speech>0||f.stomp>0||f.ratio>0||f.pierce>0||f.boogie>0||f.ember>0||f.transfigure>0||f.newSpecialFlash>0){key='special';}
+    else if(f.judgment>0||f.cleave>0||f.blackFlash>0||f.sweep>0||f.speech>0||f.stomp>0||f.ratio>0||f.pierce>0||f.boogie>0||f.ember>0||f.transfigure>0||f.newSpecialFlash>0){key='special';}
     else if(f.flash>0&&f.invul===0){key='hurt';elapsed=Math.max(0,9-f.flash);}
     else if(f.y+f.h<FLOOR-1){key=f.vy<0?'jump':'fall';elapsed=Math.abs(f.vy)>7?0:7;}
     else if(Math.abs(f.vx)>0.9){key='walk';}
@@ -46,7 +47,7 @@
     function P(points,col,outline){const ps=points.map(([x,y])=>[Math.round(x),Math.round(y)]),ys=ps.map(v=>v[1]);for(let y=Math.max(0,Math.min(...ys));y<=Math.min(H-1,Math.max(...ys));y++){const xs=[];for(let k=0;k<ps.length;k++){const a=ps[k],b=ps[(k+1)%ps.length];if((a[1]<=y&&b[1]>y)||(b[1]<=y&&a[1]>y))xs.push(a[0]+(y-a[1])*(b[0]-a[0])/(b[1]-a[1]));}xs.sort((a,b)=>a-b);for(let k=0;k+1<xs.length;k+=2)R(Math.ceil(xs[k]),y,Math.floor(xs[k+1])-Math.ceil(xs[k])+1,1,col);}if(outline)ps.forEach((a,k)=>L(...a,...ps[(k+1)%ps.length],outline));}
     function segment(a,b,wa,wb,fill,hi){const dx=b[0]-a[0],dy=b[1]-a[1],n=Math.hypot(dx,dy)||1,nx=-dy/n,ny=dx/n;P([[a[0]+nx*wa/2,a[1]+ny*wa/2],[b[0]+nx*wb/2,b[1]+ny*wb/2],[b[0]-nx*wb/2,b[1]-ny*wb/2],[a[0]-nx*wa/2,a[1]-ny*wa/2]],fill,p.ink);if(hi)L(a[0]-1,a[1],b[0]-1,b[1]-1,hi);}
     function shoe(x,y,front){P([[x-4,y-4],[x+3,y-4],[x+5,y-2],[x+9,y-1],[x+9,y+1],[x-5,y+1]],p.shoe,p.ink);R(x-3,y-3,5,1,front?p.pl:p.light);R(x-4,y+1,13,1,p.ink);}
-    const isPanda=p.kind==='panda',muscle=p.kind==='muscle',stocky=p.kind==='jogo';
+    const isPanda=p.kind==='panda',muscle=p.kind==='muscle'||p.kind==='sovereign',stocky=p.kind==='jogo';
     const bulk=isPanda?6:muscle?3:stocky?1:0;
     let bob=key==='idle'?[0,0,-1,-1,0,1,1,0][i]:key==='walk'?[0,-1,0,0,-1,0][i]:0;
     let lean=key==='punch'?[0,-2,1,5,5,1][i]:key==='kick'?[0,-1,-3,-4,-4,-1][i]:key==='hurt'?-4:key==='idle'?[0,1,1,0,0,-1,-1,0][i]:0;
@@ -87,17 +88,31 @@
     if(stocky){P([[cx-10,27+bob],[cx+13,27+bob],[cx+14,35+bob],[cx+5,33+bob],[cx-6,36+bob],[cx-12,32+bob]],'#d5a448',p.ink);for(const [x,y]of [[-4,30],[8,30],[-7,40],[5,44]])R(cx+x,y+bob,3,3,p.kind==='jogo'?'#c4b28b':p.light);}
     if(p.kind==='patch'){R(cx-8,35+bob,7,9,'#9baeb4');R(cx+4,29+bob,6,10,'#657c8f');L(cx-2,30+bob,cx-2,47+bob,p.ink);for(let y=33;y<47;y+=4)R(cx-3,y+bob,3,1,p.light);}
     // Neck, jaw and 3/4 profile. Character identity comes from silhouette, not labels.
+    if(p.kind==='sovereign'){
+      segment([cx-7,38+bob],[cx-17,45+bob],7,6,p.skin,p.shade);
+      segment([cx-17,45+bob],[cx-8,49+bob],6,5,p.skin,p.light);
+      segment([cx+9,39+bob],[cx+21,44+bob],7,6,p.skin,p.shade);
+      segment([cx+21,44+bob],[cx+26,35+bob],6,5,p.skin,p.light);
+      R(cx-19,44+bob,5,2,p.ink);R(cx+18,41+bob,5,2,p.ink);
+      R(cx-5,47+bob,18,4,'#75374d');R(cx,48+bob,4,2,p.accent);
+    }
     R(neck[0]-3,neck[1]-4,6,7,p.shade);
     const hx=cx+5,hy=14+bob-(isPanda?1:0);
     P([[hx-7,hy+2],[hx+4,hy],[hx+9,hy+4],[hx+9,hy+8],[hx+12,hy+10],[hx+9,hy+12],[hx+8,hy+16],[hx+3,hy+18],[hx-5,hy+14],[hx-7,hy+9]],p.skin,p.ink);
     P([[hx-5,hy+8],[hx-1,hy+10],[hx+1,hy+16],[hx+4,hy+17],[hx-4,hy+14]],p.shade);R(hx-7,hy+9,3,5,p.skin);
     L(hx+4,hy+8,hx+9,hy+7,p.ink);R(hx+5,hy+9,4,2,'#f4e7cf');R(hx+8,hy+9,1,2,p.ink);R(hx+7,hy+14,3,1,p.shade);
     const hair=points=>P(points.map(([x,y])=>[hx+x,hy+y]),p.hair,p.ink);
-    if(['Megumi','Yuji','Sukuna'].includes(name)){
+    if(['Megumi','Yuji','Sukuna','The Strongest of History'].includes(name)){
       const tall=name==='Megumi'?4:0;
       hair([[-8,9],[-12,3],[-7,4],[-8,-5-tall],[-2,-1],[-1,-8-tall],[3,-3],[8,-6-tall],[8,0],[13,-1],[10,5],[5,4],[3,7],[-1,3],[-4,9]]);
       L(hx-6,hy-1,hx-2,hy+2,p.hs);L(hx+2,hy-3,hx+5,hy+1,p.hs);R(hx-8,hy+7,3,5,p.hair);
-      if(name==='Sukuna'){R(hx+3,hy+11,5,1,p.ink);L(hx+1,hy+13,hx+4,hy+15,p.ink);R(hx+6,hy+3,1,3,p.ink);}
+      if(name==='Sukuna'||p.kind==='sovereign'){
+        // Visible ink markings: forehead fork, cheek bars, jaw/chin lines.
+        R(hx+4,hy+3,2,4,p.ink);R(hx+2,hy+3,2,1,p.ink);R(hx+6,hy+3,2,1,p.ink);
+        R(hx+2,hy+11,7,1,p.ink);R(hx+3,hy+13,6,1,p.ink);
+        L(hx,hy+13,hx+3,hy+16,p.ink);R(hx+5,hy+17,3,1,p.ink);
+        if(p.kind==='sovereign'){R(hx+6,hy+12,3,1,'#d72e52');R(hx-3,hy+10,2,4,p.ink);}
+      }
     }else if(name==='Hakari'){
       hair([[-8,9],[-9,2],[-6,-3],[-2,-4],[0,-2],[3,-4],[7,-2],[10,2],[7,6],[3,5],[1,7],[-3,5],[-5,10]]);
       for(const [x,y]of [[-5,0],[-1,-1],[4,0],[-6,4],[0,3]])R(hx+x,hy+y,3,2,p.hs);R(hx+9,hy+13,1,1,'#edd274');

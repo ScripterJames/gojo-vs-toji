@@ -280,3 +280,10 @@ Inspect the **exact new branch SHA** CI result, fix if needed, then fast-forward
 - Uploaded runtime and regression-test Git blobs matched locally verified bytes: `adventure/town.js` `a57ce78840cced9843f73d837f81a11ac4984c55` and `tests/test_hakone_interactions.py` `6b397b84471fd948bede680da1ce007c7225d9d5`. Commit comparison showed only these files and this development log changed; no root or preview edits.
 - Fast-forwarded main with expected-head check and without force to `7a4c422737184704ff78b2be9bd28110576371ec`. The [Pages deployment run 42747198334](https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42747198334) for this exact runtime commit **completed successfully**. Direct public Pages gameplay verification remains unavailable to the research browser; deployment success is not a public user playthrough.
 - This follow-up changes development documentation **only**, not runtime or test bytes. Next prioritize physical iOS/Android D-pad gesture/capture behavior and any concrete user-reported navigation defects. Do not recreate the completed 16-fighter roster, character chooser, furnishings, or scenery.
+
+## Latest foreground pass: strongest character, onsen and challenger progression
+See `docs/HAKONE_STRONGEST_ONSEN.md` for exact requested changes, tests and status.
+This pass adds a seventeenth intentionally overpowered character, real wash/soak/
+exit interactions, automatic next CPU challengers and warm ramen/soba-only art.
+Read fresh main before scheduled changes; do not revert the added character to
+sixteen or confuse the still-pending external-art research with imported assets.

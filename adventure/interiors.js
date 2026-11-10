@@ -62,7 +62,7 @@
     seat('seat','Dojo changing bench',76,366,150),obj('restCushion','cushion','Meditation cushion',432,354,34,24),
     obj('rules','board','Dojo rules & controls',478,300,56,38,{service:'info',description:'F punches. D kicks. A uses your signature special. Practice F, F, D at the wooden dummy; use the upgrade board before your next fight.'})
   ];
-  layouts.onsen=[...common(),obj('bath','bath','Use the hot spring',176,132,288,100),
+  layouts.onsen=[...common(),obj('bath','bath','Enter the hot spring',176,132,288,100,{access:[{x:190,y:248},{x:320,y:248},{x:450,y:248},{x:164,y:184},{x:476,y:184}]}),
     obj('lockerLeft','locker','Changing-room cubbies',70,96,70,118,{service:'bag'}),
     obj('lockerRight','locker','Changing-room cubbies',504,96,64,118,{service:'bag'}),
     ...[206,276,346].flatMap((x,i)=>[obj('wash'+i,'basin','Wash before bathing '+(i+1),x,259,28,24,{service:'wash'}),obj('washSeat'+i,'stool','Bathing stool '+(i+1),x+3,304,22,18)]),

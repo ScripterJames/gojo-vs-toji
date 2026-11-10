@@ -2,12 +2,14 @@
 (() => {
   'use strict';
   const D=HakoneData,A=HakoneArt,I=HakoneInteraction,$=id=>document.getElementById(id);
-  const roster=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo','Jogo','Mahito'];
+  const roster=['Gojo','Toji','Hakari','Sukuna','Megumi','Yuji','Nobara','Maki','Toge','Panda','Nanami','Yuta','Choso','Todo','Jogo','Mahito','The Strongest of History'];
   const canvas=$('world'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;
   const SAVE='hakone-life-town-v1',COINS='gojo-vs-toji-arcade-coins-v1',LEVELS='gojo-vs-toji-upgrade-levels-v1',GIFT='gojo-vs-toji-upgrade-starter-v1';
   const memoryStore={};
   let storageOK=true,noticeTimer=0,clock=0,mode='town',keys={},dialogAction=null,drillStep=0,lastSave=0;
   let route=null,chosen=null,hovered=null;
+  // Activities are transient, never serialized in the middle of the pool.
+  let activity=null,onsenWashed=false;
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n)),num=(v,d=0)=>Number.isFinite(Number(v))?Number(v):d;
   function read(k){if(!storageOK)return memoryStore[k]??null;try{const v=localStorage.getItem(k);memoryStore[k]=v;return v}catch(_){storageOK=false;return memoryStore[k]??null}}
   function write(k,v){memoryStore[k]=v;if(!storageOK)return false;try{localStorage.setItem(k,v);return true}catch(_){storageOK=false;return false}}
@@ -26,7 +28,10 @@
   function coins(){return clamp(Math.floor(num(read(COINS))),0,999999)}
   function pay(n){n=Math.floor(n);if(n<0||coins()<n)return false;write(COINS,String(coins()-n));return true}
   function award(n){write(COINS,String(coins()+Math.max(0,Math.floor(n))));hud();}
-  function save(){const ok=write(SAVE,JSON.stringify(state));$('saveLabel').textContent=ok?'Saved on this device':'Saving blocked — progress is temporary';hud();return ok}
+  function save(){
+    const savedState=activity?{...state,x:activity.returnPoint.x,y:activity.returnPoint.y}:state;
+    const ok=write(SAVE,JSON.stringify(savedState));$('saveLabel').textContent=ok?'Saved on this device':'Saving blocked — progress is temporary';hud();return ok;
+  }
   function notify(message){$('notice').textContent=message;noticeTimer=5;}
   let audio=null;
   function sound(kind='click'){
@@ -93,13 +98,13 @@
     panel(name+' · Upgrades','Three levels per upgrade. Battle upgrades in Hakone Arena; coins are shared with the classic game. Prices: 35 / 70 / 105 coins. Purchases apply to your next fight.');
     for(const [id,label,desc] of defs){const level=clamp(Math.floor(num(rank[id])),0,3),price=35+level*35;
       const row=document.createElement('div');row.className='item';const words=document.createElement('div');words.className='grow';
-      const title=document.createElement('strong'),detail=document.createElement('small');title.textContent=label+' '+('★'.repeat(level)+'☆'.repeat(3-level));detail.textContent=desc;words.append(title,detail);
+      const title=document.createElement('strong'),detail=document.createElement('small');title.textContent=label+' '+('★'.repeat(level)+'☆'.repeat(3-level));detail.textContent=name==='The Strongest of History'?({power:'Punch +10; kick +15 per level',vitality:'Maximum battle health +60 per level',technique:'Judgment +25 total damage per level'}[id]||desc):desc;words.append(title,detail);
       const btn=document.createElement('button');btn.textContent=level===3?'MAX':price+' coins';btn.disabled=level===3||coins()<price;
       btn.onclick=()=>{if(!pay(price))return;levels[name]={...rank,[id]:level+1};write(LEVELS,JSON.stringify(levels));save();sound('purchase');notify(name+' upgraded. Start a new fight to use it.');upgrade();};row.append(words,btn);$('panelBody').append(row);
     }
   }
-  const fighterMoves={Gojo:'Blue',Toji:'Heavenly Restriction',Hakari:'Jackpot',Sukuna:'Cleave',Megumi:'Divine Dog',Yuji:'Black Flash',Nobara:'Nail + Resonance',Maki:'Weapon Sweep',Toge:'Cursed Speech',Panda:'Guard Stomp',Nanami:'Ratio Strike',Yuta:'Rika Guard',Choso:'Piercing Blood',Todo:'Boogie Woogie',Jogo:'Volcanic Eruption',Mahito:'Idle Transfiguration'};
-  function selectFighter(){panel('Choose your traveler','Sixteen playable fighters in Hakone Arena, each with a different special move. Your choice is saved for the next fight.',roster.map(name=>({label:name+' · '+fighterMoves[name],run:()=>{state.fighter=name;save();close();}})));}
+  const fighterMoves={Gojo:'Blue',Toji:'Heavenly Restriction',Hakari:'Jackpot',Sukuna:'Cleave',Megumi:'Divine Dog',Yuji:'Black Flash',Nobara:'Nail + Resonance',Maki:'Weapon Sweep',Toge:'Cursed Speech',Panda:'Guard Stomp',Nanami:'Ratio Strike',Yuta:'Rika Guard',Choso:'Piercing Blood',Todo:'Boogie Woogie',Jogo:'Volcanic Eruption',Mahito:'Idle Transfiguration','The Strongest of History':'History’s Judgment · 5× power'};
+  function selectFighter(){panel('Choose your traveler','Seventeen playable fighters in Hakone Arena, each with a different special move. Your choice is saved for the next fight.',roster.map(name=>({label:name+' · '+fighterMoves[name],run:()=>{state.fighter=name;save();close();}})));}
   const sceneCache=new Map();
   function interior(id){return HakoneInteriors.objects(id)}
   function objects(){
@@ -122,6 +127,7 @@
   }
   function interact(input=null){
     if(mode!=='town')return false;
+    if(activity){const wasBath=activity.kind==='soak';stopActivity();if(!input||(wasBath&&input.id==='bath'))return true;}
     const o=input?objects().find(x=>x.id===input.id&&(!input.scene||x.scene===input.scene)):near();
     if(!o){notify('Walk closer or click an object to walk over to it.');return false;}
     if($('panel').open)close();
@@ -139,11 +145,12 @@
     return objects().some(o=>{const b=o.collision||o;return o.solid&&x+6>b.x&&x-6<b.x+b.w&&y>b.y&&y-7<b.y+b.h;});
   }
   function enter(id){const b=D.buildings.find(x=>x.id===id);if(!b)return;
+    stopActivity(false);onsenWashed=false;
     route=null;chosen=null;hovered=null;state.returnPoint={x:b.anchor.x,y:b.anchor.y+12};state.room=id;state.x=320;state.y=410;keys={};
     if(!state.stamps.includes(id)){state.stamps.push(id);if(state.stamps.length>=6&&!state.flags.stampPrize){state.flags.stampPrize=true;award(30);notify('Six town stamps collected! +30 coins.');}else notify('Town stamp collected: '+D.shops[id].name);}
     save();close();
   }
-  function leaveRoom(){route=null;chosen=null;hovered=null;state.room=null;state.x=state.returnPoint.x;state.y=state.returnPoint.y;state.dir='down';save();close();}
+  function leaveRoom(){stopActivity(false);onsenWashed=false;route=null;chosen=null;hovered=null;state.room=null;state.x=state.returnPoint.x;state.y=state.returnPoint.y;state.dir='down';save();close();}
   function restore(energy,fullness,cost=0,message='A peaceful break.'){
     if(!pay(cost)){notify('Not enough coins. Benches and the water tap are free.');return;}
     state.energy=clamp(state.energy+energy,0,100);state.fullness=clamp(state.fullness+fullness,0,100);save();close();sound('eat');notify(message);
@@ -153,13 +160,69 @@
   }
   function map(travel=false){
     panel(travel?'Town shuttle':'Hakone Life · Walking map','A fictional neighborhood, not a real map of Hakone. West: convenience store, restaurants and gifts. East: dojo, hot spring, inn and station. Cross the river on either wooden bridge.',
-      travel?[['Shopping street',200,270],['Dojo & onsen',834,267],['Station & inn',1050,550],['Riverside park',454,630]].map(([name,x,y])=>({label:'Travel to '+name+' · free',run:()=>{state.room=null;state.x=x;state.y=y;save();close();}})):[]);
+      travel?[['Shopping street',200,270],['Dojo & onsen',834,267],['Station & inn',1050,550],['Riverside park',454,630]].map(([name,x,y])=>({label:'Travel to '+name+' · free',run:()=>{stopActivity(false);onsenWashed=false;state.room=null;state.x=x;state.y=y;save();close();}})):[]);
     const p=document.createElement('p');p.textContent='Stamps: '+state.stamps.length+'/8. Visit six buildings for a one-time 30-coin bonus.';$('panelBody').append(p);
   }
   function drill(){
     drillStep=0;panel('Combo training','Press F, F, then D. First completed practice earns 8 coins. Repeat practice is free.',[]);dialogAction='drill';
   }
   function activate(o){noticeTimer=0;$('notice').textContent='';performInteraction(o);if($('panel').open)$('panel').dataset.target=o.id;}
+
+  // Actual onsen actions: rinse at a reachable basin, then step into the water.
+  // Fees retain the original 15 coins / 8 with an owned towel. Never charge on exit.
+  function stopActivity(announce=true){
+    if(!activity)return false;
+    const old=activity;activity=null;route=null;chosen=null;hovered=null;keys={};
+    state.x=old.returnPoint.x;state.y=old.returnPoint.y;state.step=0;state.dir='down';
+    if(blocked(state.x,state.y)){state.x=320;state.y=410;}
+    save();canvas.focus({preventScroll:true});
+    if(announce)notify(old.kind==='soak'?'You step out of the hot spring. Your energy is kept.':'You stop rinsing. Use a wash station to finish.');
+    return true;
+  }
+  function startWash(o){
+    if(state.room!=='onsen'||activity)return false;
+    const point=I.target(o,state,blocked)?.point;
+    if(!point){close();interact(o);return false;}
+    close();state.x=point.x;state.y=point.y;state.dir='up';state.step=0;
+    activity={kind:'wash',objectId:o.id,elapsed:0,duration:2,returnPoint:{x:point.x,y:point.y}};
+    notify('Rinsing at the wash station… E or Escape cancels.');save();return true;
+  }
+  function startSoak(o){
+    if(state.room!=='onsen'||activity||!onsenWashed)return false;
+    const point=I.target(o,state,blocked)?.point;
+    if(!point){close();interact(o);return false;}
+    const fee=state.bag.towel>0?8:15;
+    if(!pay(fee)){notify('Not enough coins. Washing and the changing bench are free.');return false;}
+    close();
+    // Each activity owns its safe shore point; reload and arena switches use it.
+    activity={kind:'soak',objectId:o.id,elapsed:0,fee,returnPoint:{x:point.x,y:point.y},
+      waterPoint:{x:clamp(point.x,o.x+38,o.x+o.w-38),y:o.y+o.h*.68}};
+    state.x=activity.waterPoint.x;state.y=activity.waterPoint.y;state.step=0;state.dir='down';
+    notify('Soaking… energy restores gradually. E, Escape, a movement key, or Step out leaves the bath.');save();return true;
+  }
+  function bathMenu(o){
+    const fee=state.bag.towel>0?8:15;
+    const buttons=onsenWashed?[{label:'Enter bath · '+fee+' coins',disabled:coins()<fee,run:()=>startSoak(o)}]:[
+      {label:'Go to a washing station · free',run:()=>{close();const wash=objects().find(x=>x.service==='wash');if(wash)interact(wash);}}
+    ];
+    panel('Cedar Hot Spring',onsenWashed?
+      'Ready to soak. Step into the water and regain energy over time. '+(state.bag.towel>0?'Your own towel reduces entry to 8 coins.':'Entry is 15 coins; a towel is provided.')+' E, Escape, a movement key, or Step out brings you back to the edge.':
+      'First rinse at one of the three washing stations. Then tap the pool again to get in. Rinsing is free; bathing is 15 coins, or 8 with your own towel.',buttons);
+  }
+  function updateActivity(dt){
+    if(!activity)return;
+    activity.elapsed+=dt;clock+=dt;lastSave+=dt;
+    if(activity.kind==='wash'&&activity.elapsed>=activity.duration){
+      const old=activity;activity=null;onsenWashed=true;state.x=old.returnPoint.x;state.y=old.returnPoint.y;
+      state.energy=clamp(state.energy+6,0,100);state.flags.onsenRinsed=true;save();
+      notify('Rinsed and ready! Tap the pool, or walk to its edge and press E.');
+    }else if(activity.kind==='soak'){
+      state.energy=clamp(state.energy+dt*12,0,100);
+      state.flags.onsenVisited=true;
+    }
+    if(lastSave>1){save();lastSave=0;}else hud();
+  }
+
   function performInteraction(o){
     if(!o){notify('Walk closer to a doorway, person or object. E interacts.');return;}
     sound();
@@ -175,7 +238,14 @@
     if(o.service==='info'){panel(o.name,o.description||'Ask a nearby attendant for help.');return;}
     if(o.service==='gear'){panel(o.name,'Check your equipment, choose your fighter, or improve your skills.',[{label:'Fighter upgrades',run:upgrade},{label:'Choose fighter',run:selectFighter},{label:'Open your bag',run:bag}]);return;}
     if(o.service==='stretch'){panel(o.name,'Loosen up before your next practice.',[{label:'Stretch · +10 energy',run:()=>restore(10,0,0,'A good stretch. You feel ready to explore.')}]);return;}
-    if(o.service==='wash'){panel(o.name,'Rinse at the wash station before visiting the hot spring.',[{label:'Wash and freshen up · free',run:()=>restore(6,0,0,'Freshened up. Enjoy the bath!')}]);return;}
+    if(o.service==='wash'){panel(o.name,'Use the taps and rinse here for two seconds. Then tap the pool to soak.',[{label:'Wash and freshen up · free',run:()=>startWash(o)}]);return;}
+    if(state.room==='onsen'&&o.id.startsWith('washSeat')){
+      const wash=objects().find(x=>x.id==='wash'+o.id.slice('washSeat'.length));
+      panel(o.name,'This stool belongs to the washing station in front of it.',[
+        {label:'Use this washing station',run:()=>{close();if(wash)interact(wash);}},
+        {label:'Sit and rest · free',run:()=>restore(6,0,0,'A quiet moment by the baths.')}
+      ]);return;
+    }
 
     if(o.type==='vending'){shop(o.name,o.id==='vending2'?['boss','iyemon','water','oolong','pocari']:['water','iyemon','pocari','oolong','boss']);return;}
     if(o.id==='microwave'){transform('bento','warmBento','Microwave');return;}
@@ -195,9 +265,7 @@
       panel(o.name,'A proper place to sit, rest, and enjoy something from your bag. Resting is free.',actions);return;
     }
     if(o.type==='fountain'){panel(o.name,'Refill and enjoy a drink without leaving a disposable bottle.',[{label:'Drink water · +18 energy',run:()=>restore(18,0,0,'A refreshing drink of water.')}]);return;}
-    if(o.type==='bath'){
-      const fee=state.bag.towel>0?8:15;panel('Cedar Hot Spring','A restorative game break. Use your own towel for a discount.',[{label:'Take a bath · '+fee+' coins',disabled:coins()<fee,run:()=>restore(100,0,fee,'You leave the hot spring refreshed.') }]);return;
-    }
+    if(o.type==='bath'){bathMenu(o);return;}
     if(o.type==='bed'){panel('A room at Maple Ryokan','Rest, recharge and have a light breakfast.',[{label:'Stay and rest · 18 coins',disabled:coins()<18,run:()=>restore(100,50,18,'A comfortable rest and a fresh start.')}]);return;}
     if(o.id==='upgrades'){upgrade();return;}
     if(o.id==='dummy'){drill();return;}
@@ -219,7 +287,13 @@
         panel('Innkeeper','Welcome to Maple Ryokan. Our delivery from 7-Eleven should be arriving soon.',[{label:'Deliver the parcel · +25 coins',disabled:!state.parcel||state.flags.delivered,run:()=>{if(!state.parcel||state.flags.delivered)return;state.parcel=false;state.flags.delivered=true;award(25);save();close();notify('Delivery complete. Thank you! +25 coins.');}}]);return;
       }
       if(state.room==='dojo'){panel('Dojo trainer','Train at the wooden dummy, spend coins on upgrades, or challenge the CPU. Leaving a fight gives no victory reward.',[{label:'Fighter upgrades',run:upgrade},{label:'Enter arena',run:arena},{label:'Choose fighter',run:selectFighter}]);return;}
-      if(state.room==='onsen'){panel('Bath attendant','The pool is straight ahead. A visit costs 15 game coins, or 8 with your own towel. There is no fighting in town.');return;}
+      if(state.room==='onsen'){
+        panel('Bath attendant','Welcome! 1. Rinse at a wash station. 2. Tap the pool to enter. 3. Relax in the water, then use E, Escape or Step out to leave. Entry is 15 coins, or 8 with your own towel. Lockers open your bag.',[
+          {label:'Show me a washing station',run:()=>{close();interact(objects().find(x=>x.id==='wash0'));}},
+          {label:'Show me the bath',run:()=>{close();interact(objects().find(x=>x.id==='bath'));}},
+          {label:'Browse towels',run:()=>shop('Onsen towels',['towel'])}
+        ]);return;
+      }
       if(state.room&&D.shops[state.room].stock.length){shop(D.shops[state.room].name,D.shops[state.room].stock);return;}
       panel(o.name,o.id==='tourist'?'Mika: I am collecting town stamps! Step into six different buildings and check your map. The sweets shop has a little puzzle box.':'Ren: Please recycle your bottles and cans. The riverside benches are free, and the clear umbrella is useful when it rains.');return;
     }
@@ -230,7 +304,7 @@
     panel(o.name,description);
   }
   function arena(){
-    close();save();route=null;chosen=null;hovered=null;mode='arena';keys={};$('townView').hidden=true;$('arenaView').hidden=false;$('townTab').classList.remove('active');$('arenaTab').classList.add('active');
+    stopActivity(false);close();save();route=null;chosen=null;hovered=null;mode='arena';keys={};$('townView').hidden=true;$('arenaView').hidden=false;$('townTab').classList.remove('active');$('arenaTab').classList.add('active');
     $('arenaFrame').src='arena.html?from=hakone&p1='+encodeURIComponent(state.fighter);$('leaveFight').hidden=false;hud();
   }
   function town(){
@@ -264,6 +338,9 @@
       }
       return;
     }
+    if(activity&&['e','escape','arrowleft','arrowright','arrowup','arrowdown',' ','w','a','s','d'].includes(k)){
+      e.preventDefault();stopActivity();return;
+    }
     if(['arrowleft','arrowright','arrowup','arrowdown',' ','w','a','s','d'].includes(k)){e.preventDefault();route=null;chosen=null;hovered=null;}keys[k]=true;
     if(e.repeat)return;
     if(k==='q')chooseNext();if(k==='e')interact();if(k==='b')bag();if(k==='u')upgrade();if(k==='m')map();
@@ -272,11 +349,11 @@
   document.addEventListener('visibilitychange',()=>{keys={};if(document.hidden)save();});addEventListener('pagehide',save);
   addEventListener('storage',e=>{if(e.key===COINS||e.key===LEVELS)hud();});
   for(const btn of document.querySelectorAll('[data-move]')){
-    const clear=()=>delete keys[btn.dataset.move];btn.onpointerdown=e=>{e.preventDefault();btn.setPointerCapture(e.pointerId);route=null;chosen=null;hovered=null;keys[btn.dataset.move]=true;};btn.onpointerup=clear;btn.onpointercancel=clear;btn.onlostpointercapture=clear;
+    const clear=()=>delete keys[btn.dataset.move];btn.onpointerdown=e=>{e.preventDefault();btn.setPointerCapture(e.pointerId);stopActivity();route=null;chosen=null;hovered=null;keys[btn.dataset.move]=true;};btn.onpointerup=clear;btn.onpointercancel=clear;btn.onlostpointercapture=clear;
   }
   let camera={x:0,y:0};
   function walkTo(p){
-    route=null;chosen=null;hovered=null;
+    stopActivity();route=null;chosen=null;hovered=null;
     if(blocked(p.x,p.y)){notify('That spot is blocked. Tap an open part of the path.');return false;}
     const goal={x:p.x,y:p.y,w:1,h:1,anchor:{x:p.x,y:p.y}};
     const path=I.plan(state,goal,blocked,state.room?640:D.width,state.room?480:D.height);
@@ -290,11 +367,14 @@
   canvas.addEventListener('pointerleave',()=>hovered=null);
   canvas.addEventListener('pointerdown',e=>{
     if(mode!=='town'||$('panel').open)return;
+    // Pointer coordinates use the CURRENT camera before a bath exit changes it.
     const p=pointerPosition(e),o=I.pick(objects(),p.x,p.y);canvas.focus({preventScroll:true});
+    if(activity&&!o){e.preventDefault();stopActivity();return;}
     if(o){e.preventDefault();chosen=o.id;interact(o);}else{e.preventDefault();walkTo(p);}
   });
   function update(dt){
     if(mode!=='town'||$('panel').open||document.hidden)return;
+    if(activity){updateActivity(dt);return;}
     let dx=(keys.arrowright||keys.d?1:0)-(keys.arrowleft||keys.a?1:0),dy=(keys.arrowdown||keys.s?1:0)-(keys.arrowup||keys.w?1:0);
     const manual=!!(dx||dy);if(manual)route=null;
     if(route){
@@ -328,23 +408,25 @@
     ctx.save();ctx.clearRect(0,0,640,400);ctx.translate(-camera.x,-camera.y);A.ground(ctx,state.room,Math.floor(clock*60));
     const list=objects(),nearby=near();
     const layers=[...list.map(o=>({y:o.y+o.h,draw:()=>{if(o.type==='building')A.building(ctx,o);else A.prop(ctx,o,clock*60,state);}})),{y:state.y,draw:()=>{
-      A.person(ctx,state.fighter,state.x,state.y,state.dir,Math.floor(state.step)%6);
+      if(activity?.kind!=='soak')A.person(ctx,state.fighter,state.x,state.y,state.dir,Math.floor(state.step)%6);
       if(state.rain&&state.umbrella&&state.bag.umbrella){A.rect(ctx,state.x-20,state.y-42,40,4,'#b9d0cb');A.rect(ctx,state.x-16,state.y-46,32,4,'#cbded1');A.rect(ctx,state.x-9,state.y-49,18,3,'#d9e7da');A.rect(ctx,state.x+9,state.y-41,2,20,'#7f9693');}
     }}].sort((a,b)=>a.y-b.y);layers.forEach(x=>x.draw());
-    if(nearby){const a=anchor(nearby);ctx.strokeStyle='#ffe1a0';ctx.lineWidth=1;ctx.strokeRect(Math.round(nearby.x-2),Math.round(nearby.y-2),nearby.w+4,nearby.h+4);A.rect(ctx,a.x-8,a.y-4,16,2,'#ffe1a0');A.text(ctx,'E',a.x,nearby.y-8,'#ffe1a0',11);}
+    if(window.HakoneOnsenArt)HakoneOnsenArt.drawActivity(ctx,state,activity,clock*60);
+    if(nearby&&!activity){const a=anchor(nearby);ctx.strokeStyle='#ffe1a0';ctx.lineWidth=1;ctx.strokeRect(Math.round(nearby.x-2),Math.round(nearby.y-2),nearby.w+4,nearby.h+4);A.rect(ctx,a.x-8,a.y-4,16,2,'#ffe1a0');A.text(ctx,'E',a.x,nearby.y-8,'#ffe1a0',11);}
     if(route)for(const p of route.points)A.rect(ctx,p.x-1,p.y-1,3,3,'#ffe1a099');
     ctx.restore();
     if(state.rain&&!state.room){ctx.strokeStyle='#c5d8ce55';ctx.lineWidth=1;for(let i=0;i<60;i++){const x=(i*71+clock*34)%660,y=(i*47+clock*130)%416;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x-3,y+7);ctx.stroke();}}
     A.rect(ctx,10,10,122,25,'#253b3edb');A.text(ctx,state.room?'INDOORS':'HAKONE · N ↑',71,27,'#e7d5aa',10);
     const options=candidates(),target=route&&objects().find(o=>o.id===route.id);
-    $('cycleButton').hidden=options.length<2||!!route;
-    $('interactButton').disabled=!nearby||!!route;
-    $('interactButton').title=nearby?'Interact with '+nearby.name:'Walk closer, or click an object to approach it';
-    $('prompt').textContent=route?(target?'Walking to '+target.name:'Walking to selected spot')+' · move to cancel':nearby?'E — '+nearby.name+(options.length>1?' · Q changes target':''):'Tap open ground to walk · tap an object to use it · E interacts';
+    $('cycleButton').hidden=!!activity||options.length<2||!!route;
+    $('interactButton').textContent=activity?(activity.kind==='soak'?'Step out [E]':'Stop rinsing [E]'):'Interact [E]';
+    $('interactButton').disabled=!activity&&(!nearby||!!route);
+    $('interactButton').title=activity?'End the current onsen activity':nearby?'Interact with '+nearby.name:'Walk closer, or click an object to approach it';
+    $('prompt').textContent=activity?(activity.kind==='soak'?'Soaking · '+Math.round(state.energy)+' energy · E / Esc / Step out to leave':'Rinsing… '+Math.round(100*Math.min(1,activity.elapsed/activity.duration))+'% · E / Esc to cancel'):route?(target?'Walking to '+target.name:'Walking to selected spot')+' · move to cancel':nearby?'E — '+nearby.name+(options.length>1?' · Q changes target':''):'Tap open ground to walk · tap an object to use it · E interacts';
   }
   let previous=performance.now();
   function frame(now){const dt=Math.min(.04,(now-previous)/1000);previous=now;update(dt);draw();if(noticeTimer>0){noticeTimer-=dt;if(noticeTimer<=0)$('notice').textContent='';}requestAnimationFrame(frame)}
   if(blocked(state.x,state.y)){state.room=null;state.x=200;state.y=270;}
   hud();save();requestAnimationFrame(frame);notify('Welcome to Hakone Life. Walk with arrows or WASD. Press E near a doorway or object.');
-  window.HakoneLife={snapshot:()=>JSON.parse(JSON.stringify({...state,coins:coins(),mode,storageOK})),objects:()=>objects().map(o=>({...o,anchor:anchor(o),access:I.access(o,blocked)})),nearby:()=>candidates().map(t=>({id:t.o.id,name:t.o.name,distance:t.distance})),route:()=>route?JSON.parse(JSON.stringify(route)):null,interact,enter,bag,upgrade,use,arena,town,save,blocked};
+  window.HakoneLife={snapshot:()=>JSON.parse(JSON.stringify({...state,coins:coins(),mode,storageOK,onsenWashed,activity:activity?{kind:activity.kind,elapsed:activity.elapsed,fee:activity.fee,returnPoint:{...activity.returnPoint}}:null})),objects:()=>objects().map(o=>({...o,anchor:anchor(o),access:I.access(o,blocked)})),nearby:()=>candidates().map(t=>({id:t.o.id,name:t.o.name,distance:t.distance})),route:()=>route?JSON.parse(JSON.stringify(route)):null,interact,enter,bag,upgrade,use,arena,town,save,blocked};
 })();

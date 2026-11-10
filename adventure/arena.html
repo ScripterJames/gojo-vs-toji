@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hakone Arena · Sixteen Fighters</title><style>body{margin:0;background:#101020;color:white;font:16px system-ui;text-align:center}h1{margin:12px}canvas{width:min(96vw,960px);background:#18152c;border:3px solid #777;image-rendering:pixelated}button,select{font:inherit;padding:9px;margin:5px;border-radius:7px}p{margin:8px}.shop-toggle{background:#f5d179;color:#171327;font-weight:800;border:2px solid #dba83c}
+<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Hakone Arena · Seventeen Fighters</title><style>body{margin:0;background:#101020;color:white;font:16px system-ui;text-align:center}h1{margin:12px}canvas{width:min(96vw,960px);background:#18152c;border:3px solid #777;image-rendering:pixelated}button,select{font:inherit;padding:9px;margin:5px;border-radius:7px}p{margin:8px}.shop-toggle{background:#f5d179;color:#171327;font-weight:800;border:2px solid #dba83c}
 #upgradeShop{max-width:960px;margin:10px auto 16px;text-align:left;background:#1c1a32;border:2px solid #665687;border-radius:12px;padding:16px;box-sizing:border-box}
 #upgradeShop[hidden]{display:none}.shop-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .shop-heading h2{margin:0}.shop-heading p{font-size:14px;color:#d6cee9}.coin-count{color:#f8d984}
@@ -8,21 +8,65 @@
 .upgrade-item small{display:block;color:#bab7d4;font-size:12px}.upgrade-item span{color:#f7cf6b;white-space:nowrap}
 .upgrade-item button{white-space:nowrap;min-width:91px;margin:0;font-size:13px;cursor:pointer}
 .upgrade-item button:disabled{opacity:.45;cursor:not-allowed}
-@media(max-width:680px){.upgrade-grid{grid-template-columns:1fr}} </style></head><body><h1>⚔️ Hakone Arena · Sixteen Fighters ⚔️</h1><div id="menu"><label>Mode <select id="mode"><option value="cpu">1 Player vs CPU</option><option value="pvp">2 Players</option></select></label><label>Player 1 <select id="c1"><option>Gojo</option><option>Toji</option><option>Hakari</option><option>Sukuna</option><option>Megumi</option><option>Yuji</option><option>Nobara</option><option>Maki</option><option>Toge</option><option>Panda</option><option>Nanami</option><option>Yuta</option><option>Choso</option><option>Todo</option><option>Jogo</option><option>Mahito</option></select></label><label>Player 2 <select id="c2"><option>Toji</option><option>Gojo</option><option>Hakari</option><option>Sukuna</option><option>Megumi</option><option>Yuji</option><option>Nobara</option><option>Maki</option><option>Toge</option><option>Panda</option><option>Nanami</option><option>Yuta</option><option>Choso</option><option>Todo</option><option>Jogo</option><option>Mahito</option></select></label><button id="start">Start fight!</button><button id="soundToggle" type="button" title="Mute or unmute sound effects" aria-pressed="true">🔊 Sound ON</button><button id="shopToggle" type="button" class="shop-toggle">🪙 Upgrades</button></div><section id="upgradeShop" hidden aria-label="Character upgrades"></section><canvas id="game" width="960" height="540"></canvas><p>Player 1: ←/→ move · ↑ or Space jump · F punch (close range) · D kick (longer range) · A special</p><p>Player 2: J/L move · I jump · N punch · M kick · O special (2-player mode)</p><p id="status">Choose your fighters and start!</p><p style="font-size:13px;color:#c6c1dc">Specials: Hakari Jackpot · Sukuna Cleave · Megumi Divine Dog · Yuji Black Flash · Nobara Nail + Resonance · Maki Weapon Sweep · Toge Cursed Speech · Panda Guard Stomp · Nanami Ratio Strike · Yuta Rika Guard · Choso Piercing Blood · Todo Boogie Woogie · Jogo Volcanic Eruption · Mahito Idle Transfiguration. Each fighter has separate upgrades. <a style="color:#f6d18b" href="./">Return to Hakone Life</a></p><script src="arena_animation.js?v=hakone-02"></script><script src="../preview/js/abilities.js?v=melee-129170a4"></script><script src="roster.js?v=hakone-06"></script><script src="arena_art.js?v=grounded-01"></script><script src="arena_upgrades.js?v=hakone-06"></script><script>
+@media(max-width:680px){.upgrade-grid{grid-template-columns:1fr}} </style></head><body><h1>⚔️ Hakone Arena · Seventeen Fighters ⚔️</h1><div id="menu"><label>Mode <select id="mode"><option value="cpu">1 Player vs CPU</option><option value="pvp">2 Players</option></select></label><label>Player 1 <select id="c1"><option>Gojo</option><option>Toji</option><option>Hakari</option><option>Sukuna</option><option>Megumi</option><option>Yuji</option><option>Nobara</option><option>Maki</option><option>Toge</option><option>Panda</option><option>Nanami</option><option>Yuta</option><option>Choso</option><option>Todo</option><option>Jogo</option><option>Mahito</option><option>The Strongest of History</option></select></label><label>Player 2 <select id="c2"><option>Toji</option><option>Gojo</option><option>Hakari</option><option>Sukuna</option><option>Megumi</option><option>Yuji</option><option>Nobara</option><option>Maki</option><option>Toge</option><option>Panda</option><option>Nanami</option><option>Yuta</option><option>Choso</option><option>Todo</option><option>Jogo</option><option>Mahito</option><option>The Strongest of History</option></select></label><button id="start">Start fight!</button><label style="font-size:13px"><input id="autoNext" type="checkbox" checked> Next challenger</label><button id="soundToggle" type="button" title="Mute or unmute sound effects" aria-pressed="true">🔊 Sound ON</button><button id="shopToggle" type="button" class="shop-toggle">🪙 Upgrades</button></div><section id="upgradeShop" hidden aria-label="Character upgrades"></section><canvas id="game" width="960" height="540"></canvas><p>Player 1: ←/→ move · ↑ or Space jump · F punch (close range) · D kick (longer range) · A special</p><p>Player 2: J/L move · I jump · N punch · M kick · O special (2-player mode)</p><p id="status">Choose your fighters and start!</p><p style="font-size:13px;color:#c6c1dc">Specials: Hakari Jackpot · Sukuna Cleave · Megumi Divine Dog · Yuji Black Flash · Nobara Nail + Resonance · Maki Weapon Sweep · Toge Cursed Speech · Panda Guard Stomp · Nanami Ratio Strike · Yuta Rika Guard · Choso Piercing Blood · Todo Boogie Woogie · Jogo Volcanic Eruption · Mahito Idle Transfiguration. The Strongest of History: 500 HP, 35 punch, 55 kick, 125 Judgment damage. CPU wins advance automatically after 2 seconds with full health; uncheck Next challenger to stop. Each fighter has separate upgrades. <a style="color:#f6d18b" href="./">Return to Hakone Life</a></p><script src="arena_animation.js?v=hakone-02"></script><script src="../preview/js/abilities.js?v=melee-129170a4"></script><script src="roster.js?v=strongest-01"></script><script src="arena_art.js?v=strongest-01"></script><script src="arena_upgrades.js?v=strongest-01"></script><script>
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');ctx.imageSmoothingEnabled=false;const keys={},floor=450,gravity=.75,BLUE_DURATION_MS=5000,BLUE_DRAIN_INTERVAL_MS=200,BLUE_PULL_RANGE=475;let fighters=[],playing=false,frame=0,particles=[];
+let matchMode='cpu',matchPlayer='Gojo',roundNumber=1,nextChallenger=null,previousTick=performance.now();
+const statusEl=document.getElementById('status');
+function clearInput(){for(const key of Object.keys(keys))delete keys[key];}
+addEventListener('blur',clearInput);
+document.addEventListener('visibilitychange',clearInput);
+function nextOpponent(name){
+ const all=HakoneRoster.roster,at=all.indexOf(name);
+ for(let offset=1;offset<=all.length;offset++){
+  const candidate=all[(at+offset+all.length)%all.length];
+  if(candidate!==matchPlayer)return candidate;
+ }
+ return name;
+}
+function beginRound(opponent){
+ const left=make(matchPlayer,200,0),right=make(opponent,700,1);
+ UpgradeShop.apply(left);if(matchMode==='pvp')UpgradeShop.apply(right);else UpgradeShop.base(right);
+ HakoneRoster.init(left);HakoneRoster.init(right);
+ fighters=[left,right];playing=true;particles=[];frame=0;nextChallenger=null;clearInput();
+ c1.value=matchPlayer;c2.value=opponent;
+ statusEl.textContent=(matchMode==='cpu'?'Round '+roundNumber+' · ':'')+matchPlayer+' vs '+opponent+' — Fight!';
+}
+function finishRound(){
+ if(!playing)return;playing=false;clearInput();
+ const winner=fighters.find(f=>f.hp>0);
+ const reward=winner?.side===0&&matchMode==='cpu'?35:0;
+ if(reward)UpgradeShop.award(reward);
+ if(reward&&document.getElementById('autoNext').checked){
+  nextChallenger={name:nextOpponent(fighters[1].name),remaining:2000};
+  statusEl.textContent=winner.name+' wins! +35 coins · Next: '+nextChallenger.name+' in 2s';
+ }else statusEl.textContent=!winner?'Draw! Press Start fight to try again.':winner.name+' wins!'+(reward?' +35 coins':'')+' Press Start fight to play again.';
+}
+
 const c1=document.getElementById('c1'), c2=document.getElementById('c2'), mode=document.getElementById('mode');
 const selected=new URLSearchParams(location.search).get('p1');if(window.HakoneRoster?.roster.includes(selected))c1.value=selected;
 const shopToggle=document.getElementById('shopToggle'), upgradeShop=document.getElementById('upgradeShop');
-let shopOpen=false;
+let shopOpen=false,pauseStamp=null;
+function syncPause(){
+ const now=performance.now(),paused=shopOpen||document.hidden;
+ if(paused&&pauseStamp===null)pauseStamp=now;
+ else if(!paused&&pauseStamp!==null){
+  const lost=Math.max(0,now-pauseStamp);
+  for(const f of fighters){if(f.blue>0){f.blueExpiresAt+=lost;f.blueLastUpdateAt+=lost;}if(f.judgment>0)f.judgmentStartedAt+=lost;}
+  pauseStamp=null;previousTick=now;
+ }
+}
+document.addEventListener('visibilitychange',syncPause);
 if(window.UpgradeShop) UpgradeShop.mount(upgradeShop);
-shopToggle.onclick=()=>{shopOpen=!shopOpen;upgradeShop.hidden=!shopOpen;shopToggle.textContent=shopOpen?'✕ Close Upgrades':'🪙 Upgrades';if(shopOpen)window.UpgradeShop?.render();};onkeydown=e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys[e.key.toLowerCase()]=true;if(window.AbilityFX)AbilityFX.arm()};onkeyup=e=>keys[e.key.toLowerCase()]=false;
+shopToggle.onclick=()=>{shopOpen=!shopOpen;upgradeShop.hidden=!shopOpen;shopToggle.textContent=shopOpen?'✕ Close Upgrades':'🪙 Upgrades';if(shopOpen)window.UpgradeShop?.render();syncPause();};onkeydown=e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys[e.key.toLowerCase()]=true;if(window.AbilityFX)AbilityFX.arm()};onkeyup=e=>keys[e.key.toLowerCase()]=false;
 function make(name,x,side){return{name,x,y:floor-105,vx:0,vy:0,w:54,h:105,side,face:side===0?1:-1,hp:100,cool:0,specialCool:0,attack:0,attackKind:'',attackHit:false,hitSpark:0,hitSparkX:0,hitSparkY:0,hitSparkColor:'#fbe9be',hitNumber:0,hitNumberTick:0,hitstun:0,hitDirection:0,invul:0,blue:0,blueExpiresAt:0,blueLastUpdateAt:0,blueExposureMs:0,blueDamageDealt:0,blueHitPulse:0,specialHeld:false,flash:0,aiDelay:0,dashHit:false,dashDirection:0,cpuEvade:false}}
-function start(){if(window.AbilityFX){AbilityFX.arm();AbilityFX.play('start');}const left=make(c1.value,200,0),right=make(c2.value,700,1);
-if(window.UpgradeShop){UpgradeShop.apply(left);if(mode.value==='pvp') UpgradeShop.apply(right);else UpgradeShop.base(right);}
-HakoneRoster.init(left);HakoneRoster.init(right);
-fighters=[left,right];playing=true;frame=0;particles=[];
-shopOpen=false;upgradeShop.hidden=true;shopToggle.textContent='🪙 Upgrades';
-for(const key of Object.keys(keys))delete keys[key];document.getElementById('status').textContent='Fight!';}document.getElementById('start').onclick=start;
+function start(){
+ if(window.AbilityFX){AbilityFX.arm();AbilityFX.play('start');}
+ matchMode=mode.value;matchPlayer=c1.value;roundNumber=1;nextChallenger=null;pauseStamp=null;previousTick=performance.now();
+ shopOpen=false;upgradeShop.hidden=true;shopToggle.textContent='🪙 Upgrades';
+ beginRound(c2.value);
+}
+document.getElementById('start').onclick=start;
+document.getElementById('autoNext').onchange=e=>{if(!e.target.checked&&nextChallenger){nextChallenger=null;statusEl.textContent='Next challenger stopped. Press Start fight to begin a new match.';}};
 const soundToggle=document.getElementById('soundToggle');
 function updateSoundToggle(){
  const supported=!!window.AbilityFX?.supported();
@@ -33,14 +77,14 @@ function updateSoundToggle(){
 }
 soundToggle.onclick=()=>{if(window.AbilityFX)AbilityFX.toggleMute();updateSoundToggle()};
 updateSoundToggle();
-function action(f,type){if(!playing||f.hitstun>0||(type==='special'&&(f.specialCool>0||(f.name==='Gojo'&&f.blue>0)))||(type!=='special'&&f.cool>0))return;let other=fighters[1-f.side];if(window.AbilityFX)AbilityFX.play(type==='special'?(f.name==='Gojo'?'blue':'dash'):type,f);if(type==='special'){f.attack=0;f.attackKind='';// Gojo's five-second Blue has a recovery gap; Toji's powerful dash recharges in five seconds.
+function action(f,type){if(!playing||f.hitstun>0||(type==='special'&&(f.specialCool>0||((f.name==='Gojo'&&f.blue>0)||f.judgment>0)))||(type!=='special'&&f.cool>0))return;let other=fighters[1-f.side];if(window.AbilityFX)AbilityFX.play(type==='special'?(f.name==='Gojo'?'blue':'dash'):type,f);if(type==='special'){f.attack=0;f.attackKind='';// Gojo's five-second Blue has a recovery gap; Toji's powerful dash recharges in five seconds.
 f.specialCool=f.name==='Gojo'?420:300;
 if(HakoneRoster.roster.includes(f.name) && f.name!=='Gojo' && f.name!=='Toji'){HakoneRoster.onCast(f,other);return;}
 if(f.name==='Gojo'){const now=performance.now();f.blue=300;f.blueExpiresAt=now+BLUE_DURATION_MS;f.blueLastUpdateAt=now;f.blueExposureMs=0;f.blueDamageDealt=0;f.blueTicks=0;for(let i=0;i<24;i++)particles.push({x:f.x+f.w/2+f.face*80,y:f.y+40,vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*8,life:32,color:'#40caff'});}else{f.invul=22;f.dashHit=false;
 // CPU Toji may dash aggressively or retreat from a threat.
-f.dashDirection=(f.side===1&&mode.value==='cpu'&&f.cpuEvade?-f.face:f.face);f.cpuEvade=false;
+f.dashDirection=(f.side===1&&matchMode==='cpu'&&f.cpuEvade?-f.face:f.face);f.cpuEvade=false;
 f.vx=f.dashDirection*19;f.flash=22;}}else{f.attack=type==='punch'?12:18;f.attackKind=type;f.attackHit=false;f.cool=type==='punch'?23:33;}}
-function updateF(f,other,ctrl,cpu){if(f.invul===0 && f.blackFlash<=0 && f.speech<=0 && f.ratio<=0 && f.pierce<=0 && f.transfigure<=0)f.face=other.x>f.x?1:-1;f.cool=Math.max(0,f.cool-1);f.specialCool=Math.max(0,f.specialCool-1);f.attack=Math.max(0,f.attack-1);f.invul=Math.max(0,f.invul-1);const now=performance.now();const blueActiveMs=f.blueExpiresAt?Math.max(0,Math.min(now,f.blueExpiresAt)-f.blueLastUpdateAt):0;f.blueLastUpdateAt=now;f.blue=f.blueExpiresAt?Math.max(0,Math.ceil((f.blueExpiresAt-now)*.06)):0;f.flash=Math.max(0,f.flash-1);f.blueHitPulse=Math.max(0,f.blueHitPulse-1);f.hitSpark=Math.max(0,f.hitSpark-1);f.hitNumberTick=Math.max(0,f.hitNumberTick-1);let move=0;if(cpu){let dist=other.x-f.x;move=Math.abs(dist)>100?Math.sign(dist):Math.random()<.03?-Math.sign(dist):0;if(f.aiDelay--<=0){
+function updateF(f,other,ctrl,cpu){if(f.hp<=0||other.hp<=0)return;if(f.invul===0 && f.blackFlash<=0 && f.speech<=0 && f.ratio<=0 && f.pierce<=0 && f.transfigure<=0)f.face=other.x>f.x?1:-1;f.cool=Math.max(0,f.cool-1);f.specialCool=Math.max(0,f.specialCool-1);f.attack=Math.max(0,f.attack-1);f.invul=Math.max(0,f.invul-1);const now=performance.now();const blueActiveMs=f.blueExpiresAt?Math.max(0,Math.min(now,f.blueExpiresAt)-f.blueLastUpdateAt):0;f.blueLastUpdateAt=now;f.blue=f.blueExpiresAt?Math.max(0,Math.ceil((f.blueExpiresAt-now)*.06)):0;f.flash=Math.max(0,f.flash-1);f.blueHitPulse=Math.max(0,f.blueHitPulse-1);f.hitSpark=Math.max(0,f.hitSpark-1);f.hitNumberTick=Math.max(0,f.hitNumberTick-1);let move=0;if(cpu){let dist=other.x-f.x;move=Math.abs(dist)>100?Math.sign(dist):Math.random()<.03?-Math.sign(dist):0;if(f.aiDelay--<=0){
 f.aiDelay=12+Math.random()*20;
 const threatenedByBlue=other.name==='Gojo'&&other.blue>0&&Math.abs((f.x+f.w/2)-(other.x+other.w/2+other.face*105))<170;
 const threatenedByStrike=other.attack>0&&other.face===Math.sign(f.x-other.x)&&Math.abs(dist)<(other.attackKind==='kick'?112:88)&&Math.abs(other.y-f.y)<85;
@@ -222,10 +266,21 @@ for(let i=0;i<8;i++){const a=i*Math.PI/4;ctx.beginPath();
 ctx.moveTo(x+Math.cos(a)*8,y+Math.sin(a)*8);
 ctx.lineTo(x+Math.cos(a)*(18+f.hitSpark),y+Math.sin(a)*(18+f.hitSpark));ctx.stroke();}
 ctx.restore();}});
-fighters.forEach(f=>{if(f.hitNumberTick>0){ctx.save();ctx.font='bold 20px monospace';ctx.textAlign='center';ctx.fillStyle='#ffdb86';ctx.fillText('-'+f.hitNumber,f.x+f.w/2,f.y-28-(29-f.hitNumberTick)*.6);ctx.restore();}if(f.blueHitPulse>0){ctx.font='bold 16px monospace';ctx.fillStyle='#a8edff';ctx.textAlign='center';ctx.fillText('BLUE -1',f.x+f.w/2,f.y-27);}});if(window.AbilityFX)fighters.forEach(f=>AbilityFX.drawFront(ctx,f,frame));fighters.forEach((f,i)=>{let x=i===0?35:545;rect(x,28,380,31,'#0a0a16');rect(x+4,32,372*(f.hp/(f.maxHp||100)),23,i===0?'#55caff':'#d878b7');ctx.fillStyle='white';ctx.font='bold 15px monospace';ctx.textAlign='right';ctx.fillText(Math.ceil(f.hp)+' HP',x+367,50);ctx.font='bold 23px monospace';ctx.textAlign=i===0?'left':'right';ctx.fillText(f.name,i===0?35:925,87);ctx.font='16px monospace';ctx.fillText(f.name==='Gojo'&&f.blue>0?'BLUE '+(f.blue/60).toFixed(1)+'s  -'+f.blueDamageDealt+' HP':HakoneRoster.status(f),i===0?35:925,111);});}else{ctx.fillStyle='white';ctx.font='bold 40px monospace';ctx.textAlign='center';ctx.fillText('HAKONE ARENA',480,210);ctx.font='22px monospace';ctx.fillText('Choose your fighters above!',480,260)}particles=particles.filter(p=>p.life-->0);for(let p of particles){p.x+=p.vx;p.y+=p.vy;rect(p.x,p.y,5,5,p.color)}}function loop(){frame++;if(playing&&!shopOpen){updateF(fighters[0],fighters[1],{left:'arrowleft',right:'arrowright',jump:'arrowup',jumpAlt:' ',punch:'f',kick:'d',special:'a'},false);updateF(fighters[1],fighters[0],{left:'j',right:'l',jump:'i',punch:'n',kick:'m',special:'o'},mode.value==='cpu');if(fighters.some(f=>f.hp<=0)){playing=false;
-const winner=fighters.find(f=>f.hp>0);
-const reward=winner?.side===0&&mode.value==='cpu'&&window.UpgradeShop?35:0;
-if(reward)UpgradeShop.award(reward);
-document.getElementById('status').textContent=
- !winner?'Draw!':winner.name+' wins!'+(reward?' 🪙 +'+reward+' coins':'')+' Press Start fight to play again.';}}draw();requestAnimationFrame(loop)}loop();
+fighters.forEach(f=>{if(f.hitNumberTick>0){ctx.save();ctx.font='bold 20px monospace';ctx.textAlign='center';ctx.fillStyle='#ffdb86';ctx.fillText('-'+f.hitNumber,f.x+f.w/2,f.y-28-(29-f.hitNumberTick)*.6);ctx.restore();}if(f.blueHitPulse>0){ctx.font='bold 16px monospace';ctx.fillStyle='#a8edff';ctx.textAlign='center';ctx.fillText('BLUE -1',f.x+f.w/2,f.y-27);}});if(window.AbilityFX)fighters.forEach(f=>AbilityFX.drawFront(ctx,f,frame));fighters.forEach((f,i)=>{let x=i===0?35:545;rect(x,28,380,31,'#0a0a16');rect(x+4,32,372*(f.hp/(f.maxHp||100)),23,i===0?'#55caff':'#d878b7');ctx.fillStyle='white';ctx.font='bold 15px monospace';ctx.textAlign='right';ctx.fillText(Math.ceil(f.hp)+' HP',x+367,50);ctx.font='bold 23px monospace';ctx.textAlign=i===0?'left':'right';ctx.fillText(f.name,i===0?35:925,87,380);ctx.font='16px monospace';ctx.fillText(f.judgment>0?'JUDGMENT '+(f.judgment/60).toFixed(1)+'s':f.name==='Gojo'&&f.blue>0?'BLUE '+(f.blue/60).toFixed(1)+'s  -'+f.blueDamageDealt+' HP':HakoneRoster.status(f),i===0?35:925,111);});}else{ctx.fillStyle='white';ctx.font='bold 40px monospace';ctx.textAlign='center';ctx.fillText('HAKONE ARENA',480,210);ctx.font='22px monospace';ctx.fillText('Choose your fighters above!',480,260)}particles=particles.filter(p=>p.life-->0);for(let p of particles){p.x+=p.vx;p.y+=p.vy;rect(p.x,p.y,5,5,p.color)}}function loop(now=performance.now()){
+ const elapsed=Math.max(0,Math.min(100,now-previousTick));previousTick=now;frame++;
+ if(!shopOpen&&!document.hidden){
+  if(nextChallenger){
+   nextChallenger.remaining-=elapsed;
+   if(nextChallenger.remaining<=0){const name=nextChallenger.name;roundNumber++;beginRound(name);}
+   else statusEl.textContent='Round '+roundNumber+' won! +35 coins · Next: '+nextChallenger.name+' in '+Math.ceil(nextChallenger.remaining/1000)+'s';
+  }else if(playing){
+   updateF(fighters[0],fighters[1],{left:'arrowleft',right:'arrowright',jump:'arrowup',jumpAlt:' ',punch:'f',kick:'d',special:'a'},false);
+   if(fighters.every(f=>f.hp>0))updateF(fighters[1],fighters[0],{left:'j',right:'l',jump:'i',punch:'n',kick:'m',special:'o'},matchMode==='cpu');
+   if(fighters.some(f=>f.hp<=0))finishRound();
+  }
+ }
+ draw();requestAnimationFrame(loop);
+}
+window.HakoneArena={snapshot:()=>({playing,round:roundNumber,mode:matchMode,next:nextChallenger?{...nextChallenger}:null,fighters:fighters.map(f=>({name:f.name,hp:f.hp,maxHp:f.maxHp,punch:f.punchPower,kick:f.kickPower,special:f.specialPower,judgment:f.judgment||0}))})};
+loop();
 </script></body></html>

@@ -58,18 +58,20 @@
   function apply(f) {
     const rank = levels[f.name] || blank();
     f.upgrades = {...rank};
-    f.maxHp = 100 + rank.vitality * 12;
+    const multiplier = f.name === 'The Strongest of History' ? 5 : 1;
+    f.maxHp = (100 + rank.vitality * 12) * multiplier;
     f.hp = f.maxHp;
     f.moveSpeed = (f.name === 'Toji' ? 4.75 : 4.4) + rank.agility * .22;
-    f.punchPower = 7 + rank.power * 2;
-    f.kickPower = 11 + rank.power * 3;
+    f.punchPower = (7 + rank.power * 2) * multiplier;
+    f.kickPower = (11 + rank.power * 3) * multiplier;
     f.specialPower = rank.technique;
     return f;
   }
   function base(f) {
-    f.maxHp=100; f.hp=100;
+    const multiplier = f.name === 'The Strongest of History' ? 5 : 1;
+    f.maxHp=100*multiplier; f.hp=f.maxHp;
     f.moveSpeed=f.name==='Toji'?4.75:4.4;
-    f.punchPower=7; f.kickPower=11; f.specialPower=0;
+    f.punchPower=7*multiplier; f.kickPower=11*multiplier; f.specialPower=0;
     f.upgrades=blank();
     return f;
   }
@@ -81,7 +83,7 @@
         const affordable=coins>=p;
         return '<div class="upgrade-item"><div><strong>'+type.icon+' '+type.name+
          '</strong><span> '+('★'.repeat(level)+'☆'.repeat(MAX-level))+'</span>'+
-         '<small>'+type.detail+'</small></div>'+
+         '<small>'+(name==='The Strongest of History'?({power:'Punch +10; kick +15 each level',vitality:'Maximum HP +60 each level',technique:'Judgment +25 total damage each level'}[type.id]||type.detail):type.detail)+'</small></div>'+
          '<button type="button" data-fighter="'+name+'" data-stat="'+type.id+'" '+(level===MAX || !affordable?'disabled':'')+
          '>'+(level===MAX?'MAX':p+' coins')+'</button></div>';
       }).join('')+'</div>';

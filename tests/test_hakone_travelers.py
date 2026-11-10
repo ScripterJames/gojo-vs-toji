@@ -39,7 +39,7 @@ try:
         page.wait_for_function('window.HakoneTravelers && window.HakoneSceneArt && window.HakoneLife')
     load()
     snap=lambda:page.evaluate('HakoneLife.snapshot()')
-    check('Town art modules loaded',page.evaluate('HakoneTravelers.roster.length===16 && HakoneSceneArt.version===1'))
+    check('Town art modules loaded',page.evaluate('HakoneTravelers.roster.length===17 && HakoneSceneArt.version===1'))
     check('Character button is explicit',page.locator('#fighterButton').inner_text().startswith('Character: Gojo'))
     check('Starter gift stays 50 coins',snap()['coins']==50)
     # Actual movement controls change the data passed to the renderer.
@@ -64,14 +64,14 @@ try:
       }
       return {count,bad,diff,uniqueFronts:new Set(all).size,cache:A.frame('Gojo','left',3)===A.frame('Gojo','left',3),loop:digest(A.frame('Gojo','right',1))===digest(A.frame('Gojo','right',7)),moving:digest(A.frame('Gojo','right',0))!==digest(A.frame('Gojo','right',1))};
     }''')
-    check('All 384 directional frames are grounded and nonempty',pixels['count']==384 and not pixels['bad'],pixels)
+    check('All 408 directional frames are grounded and nonempty',pixels['count']==408 and not pixels['bad'],pixels)
     check('Every traveler has four visually different directions',not pixels['diff'],pixels['diff'])
-    check('All 16 characters have distinct front sprites',pixels['uniqueFronts']==16,pixels['uniqueFronts'])
+    check('All 17 characters have distinct front sprites',pixels['uniqueFronts']==17,pixels['uniqueFronts'])
     check('Walk frames animate, loop and are cached',pixels['cache'] and pixels['loop'] and pixels['moving'])
     # Character picker remains a wrapper over the original save/selection handlers.
     page.keyboard.press('c');page.wait_for_selector('[data-traveler]')
-    check('C opens all sixteen town traveler cards',page.locator('[data-traveler]').count()==16)
-    check('Picker explains town use and has portraits',page.locator('[data-traveler] canvas').count()==16 and 'walk around Hakone' in page.locator('#panelDesc').inner_text())
+    check('C opens all seventeen town traveler cards',page.locator('[data-traveler]').count()==17)
+    check('Picker explains town use and has portraits',page.locator('[data-traveler] canvas').count()==17 and 'walk around Hakone' in page.locator('#panelDesc').inner_text())
     names=page.evaluate('HakoneTravelers.roster')
     money=snap()['coins'];start_xy=(snap()['x'],snap()['y']);bag=snap()['bag']
     for name in names:
@@ -84,9 +84,9 @@ try:
     if INLINE:
         store=page.evaluate('DB');page.close();page=browser.new_page(viewport={'width':1150,'height':1000});page.on('pageerror',lambda e:errors.append(str(e)));load(store)
     else:page.reload();page.wait_for_function('window.HakoneTravelers && window.HakoneLife')
-    check('Selected traveler survives '+('Storage-contract reload' if INLINE else 'native browser reload'),snap()['fighter']=='Mahito' and snap()['coins']==before['coins'] and snap()['bag']==before['bag'])
+    check('Selected traveler survives '+('Storage-contract reload' if INLINE else 'native browser reload'),snap()['fighter']==before['fighter'] and snap()['coins']==before['coins'] and snap()['bag']==before['bag'])
     page.keyboard.press('c');page.wait_for_selector('[data-traveler]')
-    check('Current traveler is highlighted after reload',page.locator('[data-traveler="Mahito"]').get_attribute('aria-pressed')=='true')
+    check('Current traveler is highlighted after reload',page.locator('[data-traveler="'+before['fighter']+'"]').get_attribute('aria-pressed')=='true')
     page.keyboard.press('Escape');page.wait_for_timeout(70)
     check('Picker closes back to canvas and restores normal panel layout',page.evaluate("document.activeElement.id==='world' && !document.getElementById('panelBody').classList.contains('traveler-grid')"))
     # Rendering cannot mutate player state or object geometry; environment caching works.
@@ -99,8 +99,8 @@ try:
     page.locator('#bagButton').click();check('Bag menu remains normal after character chooser',page.locator('#panelTitle').inner_text()=='Your bag' and not page.locator('#panelBody').evaluate("e=>e.classList.contains('traveler-grid')"));page.keyboard.press('Escape')
     if not INLINE:
         page.locator('#arenaTab').click();frame=page.frame_locator('#arenaFrame');frame.locator('#c1').wait_for()
-        check('Town traveler carries into real arena iframe',frame.locator('#c1').input_value()=='Mahito')
-        page.locator('#leaveFight').click();check('Leave arena retains traveler, bag and coins',snap()['mode']=='town' and snap()['fighter']=='Mahito' and snap()['coins']==before['coins'] and snap()['bag']==before['bag'])
+        check('Town traveler carries into real arena iframe',frame.locator('#c1').input_value()==before['fighter'])
+        page.locator('#leaveFight').click();check('Leave arena retains traveler, bag and coins',snap()['mode']=='town' and snap()['fighter']==before['fighter'] and snap()['coins']==before['coins'] and snap()['bag']==before['bag'])
     page.set_viewport_size({'width':390,'height':844});page.keyboard.press('c');page.wait_for_selector('[data-traveler]')
     check('Mobile character menu fits viewport',page.evaluate("document.documentElement.scrollWidth<=innerWidth+1 && document.getElementById('panelBody').scrollWidth<=document.getElementById('panelBody').clientWidth+1"))
     page.screenshot(path=str(OUT/'traveler-picker-mobile.png'),full_page=True)

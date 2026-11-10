@@ -31,7 +31,7 @@ try:
     errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
     if INLINE:
         html=(ROOT/'adventure/index.html').read_text()
-        for mod in ['data','art','shop_art','interiors','interaction','town']:
+        for mod in ['data','art','shop_art','interiors','interaction','town','travelers','scene_art','onsen_art']:
             html=re.sub(rf'<script src="{mod}\.js\?v=[^"]+"></script>',lambda _:'<script>'+(ROOT/f'adventure/{mod}.js').read_text()+'</script>',html)
         store='<script>const memory={};Object.defineProperty(window,"localStorage",{value:{getItem:k=>memory[k]??null,setItem:(k,v)=>memory[k]=String(v)}});</script>'
         page.set_content(html.replace('<script>',store+'<script>',1))

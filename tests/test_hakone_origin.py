@@ -120,8 +120,8 @@ try:
         page.locator("#arenaTab").click()
         iframe = page.frame_locator("#arenaFrame")
         expect(iframe.locator("#c1")).to_have_value("Mahito")
-        check("Real arena iframe loads sixteen characters",
-              iframe.locator("#c1 option").count() == 16)
+        check("Real arena iframe loads seventeen characters",
+              iframe.locator("#c1 option").count() == 17)
         expect(iframe.locator("#game")).to_be_visible()
         page.wait_for_function("""() => {
           const w=document.getElementById('arenaFrame').contentWindow;
