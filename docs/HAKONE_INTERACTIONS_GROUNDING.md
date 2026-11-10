@@ -83,4 +83,25 @@ licensed downloads or ripped sprite sheets. Reference links are in game credits.
 4. Favor stabilization before the 8:45 PM report. Do not overwrite concurrent
    work, force-push, or claim any unpublished branch change is live.
 
-Publication pending at this checkpoint; append exact commit/test/deployment IDs.
+## Branch validation — November 9, 2026, 5:26 PM Pacific
+Exact source commit ea4dcb047f37ead3c9b279f78c1cde714decb87f passed
+GitHub Actions run 42735446809, job 129563427184:
+https://github.com/ScripterJames/gojo-vs-toji/actions/runs/42735446809
+The job logs confirm all five suites passed, 200 assertions in total:
+- 42 town source checks: explicit Storage/position fixtures, real Chromium.
+- 84 arena source checks: controlled clock/storage, real Chromium.
+- 21 native-localhost-origin integration checks: actual iframe/PNG loading,
+  shared saved upgrades and coins, reload, reward and return-to-town behavior.
+- 19 native-localhost-origin shop checks: purchase, preparation, persistence,
+  original prices, distinct art, sixteen fighters, no abandon reward.
+- 34 NEW native-localhost-origin checks: production click-to-walk and E/Q,
+  154 reachable object routes, useful furnishings, exact sole bounds of 462
+  grounded frames, animation loops, mobile page fit and no JS exceptions.
+The new suite ran with real HTTP and native localStorage, NOT inline fallback.
+A second local inline run also passed after the final icon/notice cleanup.
+These are automated checks, not 200 full human matches or a public-site playthrough.
+All twelve uploaded file blobs match the locally tested bytes. The compare
+contains only adventure/, tests/, this document and the regression workflow;
+root index.html and preview/ are unchanged.
+This documentation-only follow-up changes no tested runtime/test source.
+Next step: checked fast-forward of main and separate Pages deployment verification.
